@@ -8,5 +8,19 @@ if(isset($_GET['lang'])) {
     $lang = $_GET['lang'];
 }
 
-print format_page($lang, 'TEST', 'TESTING TITLE');
+$action = 'start';
+if(isset($_GET['action'])) {
+    $action = $_GET['action'];
+}
+
+switch($action) {
+    case 'start':
+    default:
+        print format_page($lang, 'TEST', 'TESTING TITLE');
+        break;
+    case 'do':
+        print "hej";
+        break;
+}
+
 ?>

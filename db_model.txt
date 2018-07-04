@@ -1,0 +1,33 @@
+product:
+  id         - primary auto nonull
+  name       - nonull
+  invoice    - nonull
+  location   - nonull
+
+product_info:
+  id         - primary auto nonull
+  product    - foreign nonull, composite uniq w field
+  field      - nonull, composite uniq w product
+  data
+
+product_tag:
+  id         - primary auto nonull
+  product    - foreign nonull, composite uniq w tag
+  tag        - nonull, composite uniq w product
+
+user:
+  id         - primary auto nonull
+  name       - nonull
+  notes
+
+loan:
+  id         - primary auto nonull
+  user       - foreign nonull
+  product    - foreign nonull
+  starttime  - nonull
+  endtime    - nonull
+  active     - auto(true) nonull
+
+system:
+  key        - primary auto nonull
+  value
