@@ -4,11 +4,6 @@ require_once("./config.php");
 require_once("./template_translations.php");
 require_once("./translations.php");
 
-$db = new mysqli($db_host, $db_user, $db_pass, $db_name);
-if($db->connect_errno) {
-    throw new Exception('Failed to connect to db. The error was: '.$db->connect_error);
-}
-
 
 function format_page($lang, $content, $title) {
     global $template_translations, $translations;
