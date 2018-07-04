@@ -1,0 +1,8 @@
+<?php
+
+$db_host = 'dbserver';
+$db_user = 'dbname';
+$db_pass = 'dbpassword';
+$db_name = 'dbuser';
+
+?>
