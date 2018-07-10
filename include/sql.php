@@ -29,7 +29,10 @@ function bind($statement, $types, ...$values) {
 
 function execute($statement) {
     if(!$statement->execute()) {
-        return error('Databasfel: '.$statement->error);
+        $error  = 'Failed to execute the following statement: '.$statement;
+        $error .= '\n';
+        $error .= $statement->error.' ('.$statement->errno.')';
+        throw new Exception($error);
     }
     return true;
 }
