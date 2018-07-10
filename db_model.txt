@@ -28,6 +28,6 @@ loan:
   endtime    - nonull
   active     - auto(true) nonull
 
-system:
-  key        - primary auto nonull
+kvs:
+  key        - primary nonull
   value
