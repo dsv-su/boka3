@@ -1,25 +1,6 @@
 <?php
 
 require_once("./config.php");
-require_once("./template_translations.php");
-require_once("./translations.php");
-
-
-function format_page($lang, $content, $title) {
-    global $template_translations, $translations;
-    
-    $content = replace($translations[$lang], $content);
-    $out = replace(
-        $template_translations[$lang],
-        file_get_contents('./html/base.html')
-    );
-    $out = replace(array(
-        '¤pagetitle¤' => $title,
-        '¤contents¤'  => $content,
-    ), $out);
-
-    return $out;
-}
 
 /*
    Takes an html file containing named fragments.
@@ -45,21 +26,22 @@ function format_page($lang, $content, $title) {
 function get_fragments($infile) {
     $out = array();
     $name = '';
-    $current_fragment = null;
+    $current_fragment = '';
 
-    foreach(file($infile) as $line) {
+    $filecontents = file($infile);
+    $iter = 0;
+    foreach($filecontents as $line) {
         if(strpos($line, '¤¤') === 0) {
-            if($current_fragment !== null) {
+            if($iter != 0) {
                 $out = try_adding($name, $current_fragment, $out, $infile);
-                
             }
             $name = trim($line, "\t\n\r ¤");
-            $current_fragment = null;
+            $current_fragment = '';
         } else {
             $current_fragment .= $line;
         }
+        $iter++;
     }
-
     return try_adding($name, $current_fragment, $out, $infile);
 }
 
