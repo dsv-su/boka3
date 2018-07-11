@@ -15,7 +15,6 @@ function prepare($statement) {
         $error .= '\n';
         $error .= $db->error.' ('.$db->errno.')';
         throw new Exception($error);
-        exit(1);
     }
 
     return $s;
