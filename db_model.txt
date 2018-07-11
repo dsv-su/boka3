@@ -2,13 +2,13 @@ product:
   id         - primary auto nonull
   name       - nonull
   invoice    - nonull
-  location   - nonull
+  serial     - nonull
 
 product_info:
   id         - primary auto nonull
   product    - foreign nonull, composite uniq w field
   field      - nonull, composite uniq w product
-  data
+  data       - nonull default ''
 
 product_tag:
   id         - primary auto nonull
@@ -18,7 +18,7 @@ product_tag:
 user:
   id         - primary auto nonull
   name       - nonull
-  notes
+  notes      - nonull default ''
 
 loan:
   id         - primary auto nonull
@@ -26,8 +26,8 @@ loan:
   product    - foreign nonull
   starttime  - nonull
   endtime    - nonull
-  active     - auto(true) nonull
+  active     - nonull default 1
 
 kvs:
   key        - primary nonull
-  value
+  value      - nonull default ''
