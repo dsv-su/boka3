@@ -1,12 +1,7 @@
 <?php
-require_once('./include.php'); // provides $db, $translations
+require_once('./include/functions.php');
 
 header('Content-Type: text/html; charset=UTF-8');
-
-$lang = 'sv';
-if(isset($_GET['lang'])) {
-    $lang = $_GET['lang'];
-}
 
 $action = 'start';
 if(isset($_GET['action'])) {
@@ -16,7 +11,7 @@ if(isset($_GET['action'])) {
 switch($action) {
     case 'start':
     default:
-        print format_page($lang, 'TEST', 'TESTING TITLE');
+        print format_page('TESTING TITLE', "FOO BAR");
         break;
     case 'do':
         print "hej";
