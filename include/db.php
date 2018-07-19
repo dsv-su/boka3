@@ -1,5 +1,6 @@
 <?php
 require_once('./include/sql.php');
+require_once('./include/ldap.php');
 
 function get_ids($type) {
     switch($type) {
@@ -21,36 +22,61 @@ function get_ids($type) {
     return $ids;
 }
 
-function create_product(
-    $name = '',
-    $invoice = '',
-    $serial = '',
-    $info = array(),
-    $tags = array()
-) {
-    $ins_prod = prepare('insert into `product`(`name`, `invoice`, `serial`) values (?, ?, ?)');
-    bind($ins_prod, 'sss', $name, $invoice, $serial);
-    execute($ins_prod);
-    $prodid = $ins_prod->insert_id;
-    $ins_info = prepare('insert into `product_info`(`product`, `field`, `data`) values (?, ?, ?)');
-    bind($ins_info, 'iss', $prodid, $key, $value);
-    foreach($ins_info as $key => $value) {
-        execute($ins_info);
+function search_products($term) {
+    $search = prepare("select * from `product` where `name` like ?");
+    bind($search, 's', $term.'%');
+    execute($search);
+    $out = array();
+    foreach(result_list($search) as $row) {
+        $out[] = new Product($row['id']);
     }
-    $ins_tag = prepare('insert into `product_tag`(`product`, `tag`) values (?, ?)');
-    bind($ins_tag, 'is', $prodid, $tag);
-    foreach($tags as $tag) {
-        execute($ins_tag);
-    }
-    return new Product($prodid);
+    return $out;
 }
 
-function create_user($name = '') {
-    $ins_user = prepare('insert into `user`(`name`) values (?)');
-    bind($ins_user, 's', $name);
-    execute($ins_user);
-    return new User($ins_user->insert_id);
+function search_users($term) {
+    global $ldap;
+
+    $result = array_merge($ldap->search_user($term),
+                          $ldap->search_name($term));
+    $out = array();
+    foreach(array_keys($result) as $uname) {
+        $user = null;
+        try {
+            $user = new User($uname);
+        } catch (Exception $e) {
+            continue;
+        }
+        $out[] = $user;
+    }
+    return $out;
 }
+
+function search_loans($products) {
+    $search = 'select * from `loan` where ';
+    $iter = 0;
+    $terms = array();
+    $tc = '';
+    foreach($products as $product) {
+        if($iter != 0) {
+            $search .= 'or ';
+        }
+        $search .= '`product` = ?';
+        $terms[] = $product->get_id();
+        $tc .= 'i';
+        $iter++;
+    }
+    $out = array();
+    if($tc) {
+        $search = prepare($search);
+        bind($search, $tc, ...$terms);
+        execute($search);
+        foreach(result_list($search) as $loan) {
+            $out[] = new Loan($loan['id']);
+        }
+    }
+    return $out;
+}
+
 
 class Product {
     private $id = 0;
@@ -59,6 +85,30 @@ class Product {
     private $serial = '';
     private $info = array();
     private $tags = array();
+    
+    public static function create_product(
+        $name = '',
+        $invoice = '',
+        $serial = '',
+        $info = array(),
+        $tags = array()
+    ) {
+        $ins_prod = prepare('insert into `product`(`name`, `invoice`, `serial`) values (?, ?, ?)');
+        bind($ins_prod, 'sss', $name, $invoice, $serial);
+        execute($ins_prod);
+        $prodid = $ins_prod->insert_id;
+        $ins_info = prepare('insert into `product_info`(`product`, `field`, `data`) values (?, ?, ?)');
+        bind($ins_info, 'iss', $prodid, $key, $value);
+        foreach($ins_info as $key => $value) {
+            execute($ins_info);
+        }
+        $ins_tag = prepare('insert into `product_tag`(`product`, `tag`) values (?, ?)');
+        bind($ins_tag, 'is', $prodid, $tag);
+        foreach($tags as $tag) {
+            execute($ins_tag);
+        }
+        return new Product($prodid);
+    }
     
     public function __construct($id) {
         $this->id = $id;
@@ -102,7 +152,7 @@ class Product {
         return true;
     }
     
-    public function getId() {
+    public function get_id() {
         return $this->id;
     }
     
@@ -208,14 +258,15 @@ class Product {
         return true;
     }
 
-    public function is_available() {
-        $find = prepare('select `user` from `loan` where `active`=1 and product=?');
+    public function get_active_loan() {
+        $find = prepare('select `id` from `loan` where `active`=1 and product=?');
         bind($find, 'i', $this->id);
         execute($find);
-        if(result_single($find) === null) {
-            return true;
+        $result = result_single($find);
+        if($result === null) {
+            return null;
         }
-        return false;
+        return new Loan($result['id']);
     }
 }
 
@@ -224,7 +275,24 @@ class User {
     private $name = '';
     private $notes = '';
     
-    public function __construct($id) {
+    public static function create_user($name = '') {
+        $ins_user = prepare('insert into `user`(`name`) values (?)');
+        bind($ins_user, 's', $name);
+        execute($ins_user);
+        return new User($ins_user->insert_id);
+    }
+
+    public function __construct($clue) {
+        $id = $clue;
+        if(is_string($clue)) {
+            $find = prepare('select `id` from `user` where `name`=?');
+            bind($find, 's', $clue);
+            execute($find);
+            $id = result_single($find)['id'];
+            if($id === null) {
+                throw new Exception("Invalid username '$clue'");
+            }
+        }
         $this->id = $id;
         $this->update_fields();
     }
@@ -237,6 +305,15 @@ class User {
         $this->name = $user['name'];
         $this->notes = $user['notes'];
         return true;
+    }
+
+    public function get_displayname() {
+        global $ldap;
+        return $ldap->get_user($this->name);
+    }
+
+    public function get_id() {
+        return $this->id;
     }
     
     public function get_name() {

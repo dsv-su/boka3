@@ -12,38 +12,59 @@
   </head>
   <body>
     <div id="container">
-      <a class="accessibility-link" accesskey="s" href="#content-top" title="Hoppa över navigation"></a>
+      <a class="accessibility-link"
+         accesskey="s"
+         href="#content-top"
+         title="Hoppa över navigation"></a>
       <div id="header">
-        <a id="header-su-responsive" href="http://www.su.se/" title="Till Stockholms universitets webbplats">
-          <img src="images/su_logo_responsive_sv.png" alt="Stockholms universitet" />
+        <a id="header-su-responsive"
+           href="http://www.su.se/"
+           title="Till Stockholms universitets webbplats">
+          <img src="images/su_logo_responsive_sv.png"
+               alt="Stockholms universitet" />
         </a>
 
-        <a id="header-dsv" href="http://dsv.su.se/" title="Till DSV:s webbplats" accesskey="1">
-          <img src="images/dsv_logo_sv.png" alt="Institutionen för data- och systemvetenskap">
+        <a id="header-dsv"
+           href="http://dsv.su.se/"
+           title="Till DSV:s webbplats"
+           accesskey="1">
+          <img src="images/dsv_logo_sv.png"
+               alt="Institutionen för data- och systemvetenskap">
         </a>
 
-        <a id="header-su" href="http://www.su.se/" title="Till Stockholms universitets webbplats">
-          <img src="images/su_logo_sv.gif" alt="Stockholms universitet">
+        <a id="header-su"
+           href="http://www.su.se/"
+           title="Till Stockholms universitets webbplats">
+          <img src="images/su_logo_sv.gif"
+               alt="Stockholms universitet">
         </a>
         <div class="clear">
         </div>
       </div>
       <div id="menu">
         ¤menu¤
-        <form id="search" class="item right">
-          <input type="text" placeholder="Vad letar du efter?"/>
-          <button class="right">Sök</button>
+        <form action="./"
+              method="get"
+              id="search"
+              class="item right">
+          <input type="hidden"
+                 name="action"
+                 value="search"/>
+          <input type="text"
+                 name="q"
+                 placeholder="Vad letar du efter?"/>
+          <button type="submit"
+                  class="right">
+            Sök
+          </button>
         </form>
         <div class="clear">
         </div>
       </div>
       <div id="contents">
-        <a class="accessibility-link" name="content-top"></a>
-        
-¤¤ menuitem ¤¤
-        <a class="item left ¤active¤" href="?action=¤action¤">¤title¤</a>
-
-¤¤ foot ¤¤
+        <a class="accessibility-link"
+           name="content-top"></a>
+        ¤¤ foot ¤¤
         <div class="clear">
         </div>
       </div>
@@ -58,7 +79,11 @@
           </div>
         </div>
         <div id="footer-contact">
-          <a id="footer-contact-link" href="http://dsv.su.se/omdsv/kontakt/" accesskey="7">Kontakt</a>
+          <a id="footer-contact-link"
+             href="http://dsv.su.se/omdsv/kontakt/"
+             accesskey="7">
+            Kontakt
+          </a>
         </div>
         <div class="clear">
         </div>
@@ -66,3 +91,8 @@
     </div>
   </body>
 </html>
+¤¤ menuitem ¤¤
+<a class="item left ¤active¤"
+   href="?action=¤action¤">
+  ¤title¤
+</a>

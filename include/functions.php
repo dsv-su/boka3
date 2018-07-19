@@ -31,7 +31,7 @@ function get_fragments($infile) {
     $filecontents = file($infile);
     $iter = 0;
     foreach($filecontents as $line) {
-        if(strpos($line, '¤¤') === 0) {
+        if(strpos(trim($line), '¤¤') === 0) {
             if($iter != 0) {
                 $out = try_adding($name, $current_fragment, $out, $infile);
             }
@@ -69,7 +69,7 @@ function replace($assoc_arr, $subject) {
     $values = array();
 
     foreach($assoc_arr as $key => $value) {
-        $keys[] = $key;
+        $keys[] = '¤'.$key.'¤';
         $values[] = $value;
     }
 

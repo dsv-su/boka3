@@ -35,6 +35,7 @@ create table `user` (
   `id` bigint(20) not null auto_increment,
   primary key(`id`),
   `name` varchar(64) not null,
+  unique `uniq_name`(`name`),
   `notes` varchar(64) not null default ''
 ) character set utf8mb4,
   collate utf8mb4_unicode_ci;
