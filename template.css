@@ -103,6 +103,10 @@ button, input[type="submit"] {
     padding-right: 10px;
 }
 
+button:disabled, input[type="submit"]:disabled {
+    opacity: 0.5;
+}
+
 /*
  * Utility classes
  * ---------------
@@ -199,7 +203,7 @@ button, input[type="submit"] {
 
 #header-dsv > img {
     width: 100%;
-    max-wifth: 399px;
+    max-width: 399px;
 }
 
 #header-su {
@@ -228,7 +232,6 @@ button, input[type="submit"] {
     color: #005B7F;
     height: 100%;
     padding-top: 8px;
-    baseline: bottom;
 }
 
 #menu .active {
