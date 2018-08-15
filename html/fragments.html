@@ -25,7 +25,7 @@
 ¤¤ user_row ¤¤
 <tr>
   <td>
-    <a href="?action=users&id=¤id¤">¤displayname¤</a>
+    <a href="?page=users&id=¤id¤">¤displayname¤</a>
   </td>
   <td>
     ¤name¤
@@ -56,9 +56,123 @@
 ¤¤ product_row ¤¤
 <tr>
   <td>
-    <a href="?action=products&id=¤id¤">¤name¤</a>
+    <a href="?page=products&action=show&id=¤id¤">¤name¤</a>
   </td>
   <td>
     ¤available¤
   </td>
 </tr>
+
+¤¤ create_product ¤¤
+
+<form action="./"
+      method="get">
+  <input type="hidden"
+         name="page"
+         value="products"/>
+  <input type="hidden"
+         name="action"
+         value="new"/>
+  <button type="submit">
+    Ny produkt
+  </button>
+</form>
+
+¤¤ product_details ¤¤
+<form action="./">
+  <input type="hidden"
+         name="page"
+         value="do"/>
+  <input type="hidden"
+         name="id"
+         value="¤id¤"/>
+  <table>
+    <tfoot>
+      <tr>
+        <td>
+        </td>
+        <td>
+          <button class="right" disabled>
+            Spara
+          </button>
+          <button class="right" disabled>
+            Återställ
+          </button>
+        </td>
+    </tfoot>
+    <tbody>
+      <tr>
+        <td>
+          Namn:
+        </td>
+        <td>
+          <input type="text"
+                 name="name"
+                 value="¤name¤"/>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          Fakturanummer:
+        </td>
+        <td>
+          <input type="text"
+                 name="invoice"
+                 value="¤invoice¤"/>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          Serienummer:
+        </td>
+        <td>
+          <input type="text"
+                 name="serial"
+                 value="¤serial¤"/>
+        </td>
+      </tr>
+      ¤info¤
+      <tr>
+        <td>
+          <input type="text"
+                 name="new_info_key"
+                 placeholder="Nytt fält"/>
+        </td>
+        <td>
+          <input type="text"
+                 name="new_info_value"/>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          Taggar:
+        </td>
+        <td>
+          ¤tags¤ <input type="text"
+                        name="new_tag"
+                        placeholder="Ny tagg"/>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</form>
+
+¤¤ info_item ¤¤
+<tr>
+  <td>
+    ¤key¤:
+  </td>
+  <td>
+    <input type="text"
+           name="info_¤key¤"
+           value="¤value¤"/>
+    <a href="">x</a>
+  </td>
+</tr>
+
+¤¤ tag ¤¤
+<p>
+  <span class="tag">
+    ¤tag¤ <a href="">x</a>
+  </span>
+</p>
