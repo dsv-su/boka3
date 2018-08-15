@@ -3,17 +3,16 @@ require_once('./include/view.php');
 
 header('Content-Type: text/html; charset=UTF-8');
 
-$action = null;
-if(isset($_GET['action'])) {
-    $action = $_GET['action'];
+$page = null;
+if(isset($_GET['page'])) {
+    $page = $_GET['page'];
 }
 
-if($action === 'do') {
+if($page === 'do') {
     print('ajax endpoint');
     exit(0);
 }
 
-$page = make_page($action);
-$page->render();
+make_page($page)->render();
 
 ?>
