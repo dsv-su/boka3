@@ -22,6 +22,37 @@ function get_ids($type) {
     return $ids;
 }
 
+function get_items($type) {
+    $construct = null;
+    switch($type) {
+        case 'user':
+            $construct = function($id) {
+                return new User($id);
+            };
+            break;
+        case 'product':
+            $construct = function($id) {
+                return new Product($id);
+            };
+            break;
+        case 'loan':
+            $construct = function($id) {
+                return new Loan($id);
+            };
+            break;
+        default:
+            $err = "$type is not a valid argument. Valid arguments are user, product, loan.";
+            throw new Exception($err);
+            break;
+    }
+    $ids = get_ids($type);
+    $list = array();
+    foreach($ids as $id) {
+        $list[] = $construct($id);
+    }
+    return $list;
+}
+
 function search_products($term) {
     $search = prepare("select * from `product` where `name` like ?");
     bind($search, 's', $term.'%');
@@ -34,21 +65,16 @@ function search_products($term) {
 }
 
 function search_users($term) {
-    global $ldap;
-
-    $result = array_merge($ldap->search_user($term),
-                          $ldap->search_name($term));
-    $out = array();
-    foreach(array_keys($result) as $uname) {
-        $user = null;
-        try {
-            $user = new User($uname);
-        } catch (Exception $e) {
-            continue;
+    $userlist = get_items('user');
+    $resultlist = array();
+    foreach($userlist as $user) {
+        $uname = $user->get_name();
+        $dname = strtolower($user->get_displayname());
+        if(strpos($uname, $term) !== false || strpos($dname, $term) !== false) {
+            $resultlist[] = $user;
         }
-        $out[] = $user;
     }
-    return $out;
+    return $resultlist;
 }
 
 function search_loans($products) {
