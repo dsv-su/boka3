@@ -23,17 +23,6 @@ class Ldap {
         return $data[0]['cn'][0];
     }
 
-    public function search_name($name) {
-        $data = $this->search("cn=*$name*", 'cn', 'uid');
-        $out = array();
-        foreach($data as $result) {
-            if(isset($result['uid'])) {
-                $out[$result['uid'][0]] = $result['cn'][0];
-            }
-        }
-        return $out;
-    }
-
     public function search_user($uid) {
         $data = $this->search("uid=$uid", 'cn', 'uid');
         $out = array();
