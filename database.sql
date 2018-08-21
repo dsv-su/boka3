@@ -51,7 +51,7 @@ create table `loan` (
     foreign key(`product`) references `product`(`id`),
   `starttime` bigint(20) not null,
   `endtime` bigint(20) not null,
-  `active` tinyint(1) not null default 1
+  `returntime` bigint(20) default null
 ) character set utf8mb4,
   collate utf8mb4_unicode_ci;
 
