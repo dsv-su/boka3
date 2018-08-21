@@ -1,3 +1,13 @@
+#error {
+    position: absolute;
+    top: 5px;
+    left: 50%;
+    transform: translate(-50%);
+    background-color: #e89e66;
+    border: 2px solid #d95e00;
+    padding: 6px 10px;
+}
+
 .tag {
     margin: 1px;
     border: 1px solid black;
@@ -5,6 +15,90 @@
     background-color: lightgray;
 }
 
-td {
+.label {
+    display: inline-block;
+    min-width: 100px;
+}
+
+.loan_base {
+    padding: 5px;
+    margin-bottom: 0;
+    background-color: #d7e0eb;
+}
+
+.loan_new {
+    margin-top: 0;
+    padding: 5px;
+    background-color: #ebf0f5;
+}
+
+.hidden {
+    display: none;
+}
+
+form {
+    margin-bottom: 5px;
+}
+
+table {
+    border-collapse: collapse;
+}
+
+td, th {
+    text-align: left;
     vertical-align: top;
+    min-width: 10px;
+    padding: 2px 5px;;
+}
+
+td.available {
+    background-color: #a3a86b;
+}
+
+td.on_loan {
+    background-color: #acdee6;
+}
+
+td.overdue {
+    background-color: #d95e00;
+}
+
+tbody tr {
+    background-color: #d7e0eb;
+}
+
+tbody tr:nth-child(odd) {
+    background-color: #ebf0f5;
+}
+
+thead th, tfoot tr {
+    background-color: #c3d1e2;
+}
+
+input:disabled {
+    background-color: #ededed;
+}
+
+.button {
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+    background-image: url(images/button-background-repeater.gif);
+    background-position: left;
+    background-repeat: repeat-x;
+    color: white;
+    padding-left: 10px;
+    padding-right: 10px;
+    text-decoration: none;
+    draggable: false;
+}
+
+.button:link {
+    color: white;
+}
+
+.button:visited {
+    color: white;
+}
+
+.button:hover {
+    color: white;
 }
