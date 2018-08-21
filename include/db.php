@@ -55,7 +55,7 @@ function get_items($type) {
 
 function search_products($term) {
     $search = prepare("select * from `product` where `name` like ?");
-    bind($search, 's', $term.'%');
+    bind($search, 's', '%'.$term.'%');
     execute($search);
     $out = array();
     foreach(result_list($search) as $row) {
@@ -285,7 +285,7 @@ class Product {
     }
 
     public function get_active_loan() {
-        $find = prepare('select `id` from `loan` where `active`=1 and product=?');
+        $find = prepare('select `id` from `loan` where `returntime` is null and product=?');
         bind($find, 'i', $this->id);
         execute($find);
         $result = result_single($find);
@@ -294,6 +294,18 @@ class Product {
         }
         return new Loan($result['id']);
     }
+
+    public function get_loan_history() {
+        $find = prepare('select `id` from `loan` where product=? order by `starttime` desc');
+        bind($find, 'i', $this->id);
+        execute($find);
+        $loans = result_list($find);
+        $out = array();
+        foreach($loans as $loan) {
+            $out[] = new Loan($loan['id']);
+        }
+        return $out;
+    }
 }
 
 class User {
@@ -301,7 +313,7 @@ class User {
     private $name = '';
     private $notes = '';
     
-    public static function create_user($name = '') {
+    public static function create_user($name) {
         $ins_user = prepare('insert into `user`(`name`) values (?)');
         bind($ins_user, 's', $name);
         execute($ins_user);
@@ -310,7 +322,7 @@ class User {
 
     public function __construct($clue) {
         $id = $clue;
-        if(is_string($clue)) {
+        if(preg_match('/[a-z]/', $clue)) {
             $find = prepare('select `id` from `user` where `name`=?');
             bind($find, 's', $clue);
             execute($find);
@@ -370,10 +382,10 @@ class User {
         $statement = 'select `id` from `loan` where `user`=?';
         switch($type) {
             case 'active':
-                $statement .= ' and `active`=1';
+                $statement .= ' and `returntime` is null';
                 break;
             case 'inactive':
-                $statement .= ' and `active`=0';
+                $statement .= ' and `returntime` is not null';
                 break;
             case 'both':
                 break;
@@ -382,6 +394,7 @@ class User {
                 throw new Exception($err);
                 break;
         }
+        $statement .= ' order by `starttime` desc';
         $get = prepare($statement);
         bind($get, 'i', $this->id);
         execute($get);
@@ -393,7 +406,7 @@ class User {
     }
     
     public function create_loan($product, $endtime) {
-        $find = prepare('select * from `loan` where `product`=? and `active`=1');
+        $find = prepare('select * from `loan` where `product`=? and `returntime` is null');
         $prod_id = $product->get_id();
         bind($find, 'i', $prod_id);
         execute($find);
@@ -417,7 +430,7 @@ class Loan {
     private $product = 0;
     private $starttime = 0;
     private $endtime = 0;
-    private $active = 1;
+    private $returntime = null;
     
     public function __construct($id) {
         $this->id = $id;
@@ -433,7 +446,7 @@ class Loan {
         $this->product = $loan['product'];
         $this->starttime = $loan['starttime'];
         $this->endtime = $loan['endtime'];
-        $this->active = $loan['active'];
+        $this->returntime = $loan['returntime'];
     }
 
     public function get_id() {
@@ -441,32 +454,48 @@ class Loan {
     }
 
     public function get_user() {
-        return $this->user;
+        return new User($this->user);
     }
 
     public function get_product() {
-        return $this->product;
+        return new Product($this->product);
     }
 
-    public function get_duration() {
-        return array('start' => $this->starttime,
-                     'end' => $this->endtime);
+    public function get_duration($format = true) {
+        $style = function($time) {
+            return $time;
+        };
+        if($format) {
+            $style = function($time) {
+                return gmdate('Y-m-d', $time);
+            };
+        }
+        $out = array('start' => $style($this->starttime),
+                     'end' => $style($this->endtime));
+        if($this->returntime !== null) {
+            $out['return'] = $style($this->returntime);
+        }
+        return $out;
     }
 
     public function is_active() {
-        return $this->active;
+        if($this->returntime === null) {
+            return true;
+        }
+        return false;
     }
     
     public function end_loan() {
-        $end = prepare('update `loan` set `active`=0 where `id`=?');
-        bind($end, 'i', $this->id);
+        $now = time();
+        $end = prepare('update `loan` set `returntime`=? where `id`=?');
+        bind($end, 'ii', $now, $this->id);
         execute($end);
-        $this->active = false;
+        $this->returntime = $now;
         return true;
     }
 
     public function is_overdue() {
-        if($this->active === 0) {
+        if($this->returntime !== null) {
             return false;
         }
         $now = time();
