@@ -52,7 +52,7 @@ function try_adding($key, $value, $array, $filename) {
         throw new Exception('There is an unnamed fragment in '.$filename);
     }
     
-    $array[$key] = $value;
+    $array[$key] = trim($value);
 
     return $array;
 }
