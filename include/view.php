@@ -6,26 +6,32 @@ require_once('./include/functions.php');
 
 function make_page($page) {
     switch($page) {
-        case 'home':
         default:
-            return new StartPage();
+        case 'checkout':
+            return new CheckoutPage();
+        case 'return':
+            return new ReturnPage();
         case 'search':
             return new SearchPage();
         case 'products':
             return new ProductPage();
+        case 'users':
+            return new UserPage();
     }
 }
 
 abstract class Page {
     protected abstract function render_body();
 
-    protected $page = 'home';
+    protected $page = 'checkout';
     protected $title = "Boka2";
     protected $subtitle = '';
-    protected $menuitems = array('home' => 'Start',
-                                 'products' => 'Produkter',
-                                 'users' => 'Användare',
-                                 'checkout' => 'Låna ut');
+    protected $error = null;
+    protected $menuitems = array('checkout' => 'Låna',
+                                 'return' => 'Lämna',
+                                 'products' => 'Artiklar',
+                                 'users' => 'Låntagare',
+                                 'inventory' => 'Inventera');
     private $template_parts = array();
     protected $fragments = array();
 
@@ -44,6 +50,9 @@ abstract class Page {
     public function render() {
         $this->render_head();
         $this->render_body();
+        if($this->error) {
+            $this->render_error();
+        }
         $this->render_foot();
     }
     
@@ -82,6 +91,11 @@ abstract class Page {
         }
         return $menu;
     }
+
+    final private function render_error() {
+        print(replace(array('message' => $this->error),
+                      $this->fragments['error']));
+    }
     
     final private function render_foot() {
         print($this->template_parts['foot']);
@@ -89,14 +103,16 @@ abstract class Page {
 
     final protected function build_user_table($users) {
         $rows = '';
-        $replacements = array('id' => 0,
-                              'name' => '',
-                              'displayname' => '',
-                              'loan' => '');
+        $replacements = array('name' => '',
+                              'loan' => '',
+                              'item_link' => '');
         foreach($users as $user) {
-            $replacements['id'] = $user->get_id();
             $replacements['name'] = $user->get_name();
-            $replacements['displayname'] = $user->get_displayname();
+            $userlink = replace(array('id' => $user->get_id(),
+                                      'name' => $user->get_displayname(),
+                                      'page' => 'users'
+            ), $this->fragments['item_link']);
+            $replacements['item_link'] = $userlink;
             $loans = $user->get_loans('active');
             $loan_str = '';
             $count = count($loans);
@@ -104,103 +120,137 @@ abstract class Page {
                 case 0:
                     break;
                 case 1:
-                    $product = new Product($loans[0]->get_product());
+                    $product = $loans[0]->get_product();
                     $loan_str = $product->get_name();
                     break;
                 default:
-                    $loan_str = $count .' produkter';
+                    $loan_str = $count .' artiklar';
                     break;
             }
             $replacements['loan'] = $loan_str;
             $rows .= replace($replacements, $this->fragments['user_row']);
         }
-        return replace(array('title' => 'Användare',
-                             'rows' => $rows),
+        return replace(array('rows' => $rows),
                        $this->fragments['user_table']);
     }
 
     final protected function build_product_table($products) {
         $rows = '';
-        $replacements = array('id' => 0,
-                              'name' => '',
-                              'available' => '');
         foreach($products as $product) {
-            $replacements['id'] = $product->get_id();
-            $replacements['name'] = $product->get_name();
-            $available = '';
+            $prodlink = replace(array('id' => $product->get_id(),
+                                      'name' => $product->get_name(),
+                                      'page' => 'products'
+            ), $this->fragments['item_link']);
+            $available = 'Tillgänglig';
+            $status = 'available';
             $loan = $product->get_active_loan();
             if($loan) {
+                $user = $loan->get_user();
+                $userlink = replace(array('name' => $user->get_displayname(),
+                                          'id' => $user->get_id(),
+                                          'page' => 'users'
+                ), $this->fragments['item_link']);
+                $available = 'Utlånad till '.$userlink;
                 if($loan->is_overdue()) {
-                    $available = 'Försenad';
+                    $status = 'overdue';
+                    $available .= ', försenad';
                 } else {
-                    $end = date('Y/m/d', $loan->get_duration()['end']);
-                    $available = 'Utlånad till '.$end;
+                    $status = 'on_loan';
+                    $available .= ', åter '.$loan->get_duration()['end'];
                 }
-            } else {
-                $available = 'Tillgänglig';
             }
-            $replacements['available'] = $available;
-            $rows .= replace($replacements, $this->fragments['product_row']);
+            $rows .= replace(array('available' => $available,
+                                   'status' => $status,
+                                   'item_link' => $prodlink
+            ), $this->fragments['product_row']);
         }
-        return replace(array('title' => 'Produkter',
-                             'rows' => $rows),
+        return replace(array('rows' => $rows),
                        $this->fragments['product_table']);
     }
 
-}
-
-class StartPage extends Page {
-    public function __construct() {
-        parent::__construct();
+    final protected function build_user_loan_table($loans, $show = 'none') {
+        $vis_return = 'hidden';
+        $vis_renew = 'hidden';
+        switch($show) {
+            case 'return':
+                $vis_return = '';
+                break;
+            case 'renew':
+                $vis_renew = '';
+                break;
+            case 'both':
+                $vis_return = '';
+                $vis_renew = '';
+                break;
+            case 'none':
+                break;
+            default:
+                throw new Exception('Invalid argument.');
+        }
+        $rows = '';
+        foreach($loans as $loan) {
+            $product = $loan->get_product();
+            $prodlink = replace(array('id' => $product->get_id(),
+                                      'name' => $product->get_name(),
+                                      'page' => 'products'
+            ), $this->fragments['item_link']);
+            $available = '';
+            $duration = $loan->get_duration();
+            $status = 'on_loan';
+            if($loan->is_overdue()) {
+                $status = 'overdue';
+            }
+            $returndate = '';
+            if(isset($duration['return'])) {
+                $returndate = $duration['return'];
+            }
+            $rows .= replace(array('id' => $product->get_id(),
+                                   'item_link' => $prodlink,
+                                   'start_date' => $duration['start'],
+                                   'end_date' => $duration['end'],
+                                   'return_date' => $returndate,
+                                   'status' => $status,
+                                   'vis_renew' => $vis_renew,
+                                   'vis_return' => $vis_return
+            ), $this->fragments['loan_row']);
+        }
+        return replace(array('rows' => $rows,
+                             'vis_renew' => $vis_renew,
+                             'vis_return' => $vis_return,
+                             'item' => 'Artikel'
+        ), $this->fragments['loan_table']);
     }
 
-    protected function render_body() {
-        global $ldap;
-
-        foreach(get_ids('user') as $userid) {
-            $user = new User($userid);
-            $users[] = $user;
-        }
-
-        foreach(get_ids('product') as $prodid) {
-            $product = new Product($prodid);
-            $products[] = $product;
-        }
-
-        foreach($users as $user) {
-            echo "User: ".$ldap->get_user($user->get_name())."<br/>";
-            foreach($user->get_loans() as $loan) {
-                $product = new Product($loan->get_product());
-                $active = $loan->is_active();
-                if($active) {
-                    echo "Borrowed product: ".$product->get_name()."<br/>";
-                    if($loan->is_overdue()) {
-                        echo "Loan is overdue.";
-                    } else {
-                        $end = $loan->get_duration()['end'];
-                        echo "Loan expires on $end.";
-                    }
-                } else {
-                    echo "Returned product: ".$product->get_name();
-                }
-                echo "<br/>";
+    final protected function build_product_loan_table($loans) {
+        $rows = '';
+        foreach($loans as $loan) {
+            $user = $loan->get_user();
+            $userlink = replace(array('id' => $user->get_id(),
+                                      'name' => $user->get_name(),
+                                      'page' => 'users'
+            ), $this->fragments['item_link']);
+            $available = '';
+            $duration = $loan->get_duration();
+            $status = 'on_loan';
+            if($loan->is_overdue()) {
+                $status = 'overdue';
             }
-            echo "<br/>";
-        }
-
-        echo "<br/>";
-
-        foreach($products as $product) {
-            echo "Product name: ".$product->get_name()."<br/>";
-            echo "Available: ";
-            if($product->get_active_loan() === null) {
-                echo "yes";
-            } else {
-                echo "no";
+            $returndate = '';
+            if(isset($duration['return'])) {
+                $returndate = $duration['return'];
             }
-            echo "<br/>";
+            $rows .= replace(array('item_link' => $userlink,
+                                   'start_date' => $duration['start'],
+                                   'end_date' => $duration['end'],
+                                   'return_date' => $returndate,
+                                   'status' => $status,
+                                   'visibility' => ''
+            ), $this->fragments['loan_row']);
         }
-
+        return replace(array('rows' => $rows,
+                             'visibility' => '',
+                             'item' => 'Låntagare'
+        ), $this->fragments['loan_table']);
     }
 }
 
@@ -231,10 +281,14 @@ class SearchPage extends Page {
         $hits = $this->do_search();
         $nohits = true;
         if($hits['users']) {
+            print(replace(array('title' => 'Låntagare'),
+                          $this->fragments['subtitle']));
             print($this->build_user_table($hits['users']));
             $nohits = false;
         }
         if($hits['products']) {
+            print(replace(array('title' => 'Artiklar'),
+                          $this->fragments['subtitle']));
             print($this->build_product_table($hits['products']));
             $nohits = false;
         }
@@ -258,10 +312,13 @@ class ProductPage extends Page {
         }
         switch($this->action) {
             case 'show':
-                $this->subtitle = 'Produktdetaljer';
+                $this->subtitle = 'Artikeldetaljer';
                 break;
             case 'new':
-                $this->subtitle = 'Ny produkt';
+                $this->subtitle = 'Ny artikel';
+                break;
+            case 'list':
+                $this->subtitle = 'Artikellista';
                 break;
         }
     }
@@ -292,13 +349,18 @@ class ProductPage extends Page {
         foreach($this->product->get_tags() as $tag) {
             $tags .= replace(array('tag' => $tag), $this->fragments['tag']);
         }
-        return replace(array('id' => $this->product->get_id(),
+        $out = replace(array('id' => $this->product->get_id(),
                              'name' => $this->product->get_name(),
                              'serial' => $this->product->get_serial(),
                              'invoice' => $this->product->get_invoice(),
                              'tags' => $tags,
                              'info' => $info
         ), $this->fragments['product_details']);
+        $out .= replace(array('title' => 'Lånehistorik'),
+                        $this->fragments['subtitle']);
+        $out .= $this->build_product_loan_table(
+            $this->product->get_loan_history());
+        return $out;
     }
 
     private function build_new_page() {
@@ -312,4 +374,118 @@ class ProductPage extends Page {
     }
 }
 
+class UserPage extends Page {
+    private $action = 'list';
+    private $user = null;
+    
+    public function __construct() {
+        parent::__construct();
+        if(isset($_GET['action'])) {
+            $this->action = $_GET['action'];
+        }
+        if(isset($_GET['id'])) {
+            $this->user = new User($_GET['id']);
+        }
+        switch($this->action) {
+            case 'show':
+                $this->subtitle = 'Låntagardetaljer';
+                break;
+            case 'list':
+                $this->subtitle = 'Låntagarlista';
+                break;
+        }
+    }
+
+    protected function render_body() {
+        switch($this->action) {
+            case 'list':
+                print($this->build_user_table(get_items('user')));
+                break;
+            case 'show':
+                print($this->build_user_details());
+                break;
+        }
+    }
+    
+    private function build_user_details() {
+        $active_loans = $this->user->get_loans('active');
+        $table_active = 'Inga aktuella lån.';
+        if($active_loans) {
+            $table_active = $this->build_user_loan_table($active_loans, 'renew');
+        }
+        $inactive_loans = $this->user->get_loans('inactive');
+        $table_inactive = 'Inga gamla lån.';
+        if($inactive_loans) {
+            $table_inactive = $this->build_user_loan_table($inactive_loans,
+                                                           'return');
+        }
+        return replace(array('active_loans' => $table_active,
+                             'inactive_loans' => $table_inactive,
+                             'id' => $this->user->get_id(),
+                             'name' => $this->user->get_name(),
+                             'displayname' => $this->user->get_displayname(),
+                             'notes' => $this->user->get_notes()
+        ), $this->fragments['user_details']);
+    }
+}
+
+class CheckoutPage extends Page {
+    private $userstr = '';
+    private $user = null;
+
+    public function __construct() {
+        parent::__construct();
+        if(isset($_GET['user'])) {
+            $this->userstr = $_GET['user'];
+            try {
+                $this->user = new User($this->userstr);
+            } catch(Exception $ue) {
+                try {
+                    $ldap = new Ldap();
+                    $ldap->get_user($this->userstr);
+                    $this->user = User::create_user($this->userstr);
+                } catch(Exception $le) {
+                    $this->error = "Användarnamnet '";
+                    $this->error .= $this->userstr;
+                    $this->error .= "' kunde inte hittas.";
+                }
+            }
+        }
+    }
+
+    protected function render_body() {
+        $username = '';
+        $displayname = '';
+        $loan_table = '';
+        $enddate = gmdate('Y-m-d', time() + 604800); # 1 week from now
+        if($this->user !== null) {
+            $username = $this->user->get_name();
+            $displayname = $this->user->get_displayname();
+            $loans = $this->user->get_loans('active');
+            $loan_table = 'Inga pågående lån.';
+            if($loans) {
+                $loan_table = $this->build_user_loan_table($loans, 'renew');
+            }
+        }
+        $subhead = replace(array(
+            'title' => 'Lånade artiklar'
+        ), $this->fragments['subtitle']);
+        print(replace(array('user' => $this->userstr,
+                            'displayname' => $displayname,
+                            'end' => $enddate,
+                            'subtitle' => $subhead,
+                            'loan_table' => $loan_table,
+        ), $this->fragments['checkout_page']));
+    }
+}
+
+class ReturnPage extends Page {
+    public function __construct() {
+        parent::__construct();
+    }
+
+    protected function render_body() {
+        
+    }
+}
 ?>
