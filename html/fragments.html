@@ -1,8 +1,24 @@
 ¤¤ title ¤¤
 <h1>¤title¤</h1>
 
-¤¤ user_table ¤¤
+¤¤ subtitle ¤¤
 <h2>¤title¤</h2>
+
+¤¤ item_link ¤¤
+<a href="./?page=¤page¤&action=show&id=¤id¤">¤name¤</a>
+
+¤¤ error ¤¤
+<div id="error">
+  ¤message¤
+</div>
+
+¤¤ user_table ¤¤
+<form id="newloan"
+      method="GET">
+  <input type="hidden"
+         name="action"
+         value="checkout"/>
+</form>
 <table>
   <thead>
     <tr>
@@ -15,6 +31,8 @@
       <th>
         Lån
       </th>
+      <th>
+      </th>
     </tr>
   </thead>
   <tbody>
@@ -25,7 +43,7 @@
 ¤¤ user_row ¤¤
 <tr>
   <td>
-    <a href="?page=users&id=¤id¤">¤displayname¤</a>
+    ¤item_link¤
   </td>
   <td>
     ¤name¤
@@ -33,13 +51,21 @@
   <td>
     ¤loan¤
   </td>
+  <td>
+    <button form="newloan"
+            name="user"
+            value="¤name¤">
+      Nytt lån
+    </button>
+  </td>
 </tr>
 
 ¤¤ product_table ¤¤
-<h2>¤title¤</h2>
 <table>
   <thead>
     <tr>
+      <th>
+      </th>
       <th>
         Namn
       </th>
@@ -55,8 +81,10 @@
 
 ¤¤ product_row ¤¤
 <tr>
+  <td class="¤status¤">
+  </td>
   <td>
-    <a href="?page=products&action=show&id=¤id¤">¤name¤</a>
+    ¤item_link¤
   </td>
   <td>
     ¤available¤
@@ -64,7 +92,6 @@
 </tr>
 
 ¤¤ create_product ¤¤
-
 <form action="./"
       method="get">
   <input type="hidden"
@@ -73,8 +100,8 @@
   <input type="hidden"
          name="action"
          value="new"/>
-  <button type="submit">
-    Ny produkt
+  <button>
+    Ny artikel
   </button>
 </form>
 
@@ -99,6 +126,7 @@
             Återställ
           </button>
         </td>
+      </tr>
     </tfoot>
     <tbody>
       <tr>
@@ -176,3 +204,157 @@
     ¤tag¤ <a href="">x</a>
   </span>
 </p>
+
+¤¤ user_details ¤¤
+<form>
+  <table>
+    <tfoot>
+      <tr>
+        <td>
+        </td>
+        <td>
+          <button class="right" disabled>
+            Spara
+          </button>
+          <button class="right" disabled>
+            Återställ
+          </button>
+        </td>
+      </tr>
+    </tfoot>
+    <tbody>
+      <tr>
+        <td>
+          Namn:
+        </td>
+        <td>
+          ¤displayname¤
+        </td>
+      </tr>
+      <tr>
+        <td>
+          Användarnamn:
+        </td>
+        <td>
+          <input type="text"
+                 name="name"
+                 value="¤name¤"/>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          Anteckningar:
+        </td>
+        <td>
+          <textarea>¤notes¤</textarea>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</form>
+<h2>Aktuella lån</h2>
+¤active_loans¤
+<h2>Gamla lån</h2>
+¤inactive_loans¤
+
+¤¤ loan_table ¤¤
+<form id="renew"
+      method="GET">
+</form>
+<table>
+  <thead>
+    <tr>
+      <th>
+      </th>
+      <th>
+        ¤item¤
+      </th>
+      <th>
+        Startdatum
+      </th>
+      <th>
+        Slutdatum
+      </th>
+      <th class="¤vis_return¤">
+        Återlämnad
+      </th>
+      <th class="¤vis_renew¤">
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    ¤rows¤
+  </tbody>
+</table>
+
+¤¤ loan_row ¤¤
+<tr>
+  <td class="¤status¤">
+  </td>
+  <td>
+    ¤item_link¤
+  </td>
+  <td>
+    ¤start_date¤
+  </td>
+  <td>
+    ¤end_date¤
+  </td>
+  <td class="¤vis_return¤">
+    ¤return_date¤
+  </td>
+  <td class="¤vis_renew¤">
+    <button form="renew"
+            name="product"
+            value="¤id¤">
+      Förläng
+    </button>
+  </td>
+</tr>
+
+¤¤ checkout_page ¤¤
+<h3>Välj låntagare</h3>
+<form class="loan_base"
+      action="./"
+      method="GET">
+  <input type="hidden"
+         name="page"
+         value="checkout"/>
+  <span class="label">Användarnamn:</span>
+  <input type="text"
+         name="user"
+         placeholder="Användarnamn"
+         value="¤user¤" required/>
+  <button type="submit" >
+    Välj
+  </button>
+  <br/>
+  <span class="label">Namn:</span>
+  <input type="text"
+         name="displayname"
+         value="¤displayname¤"
+         disabled/>
+</form>
+<h3>Låna ut artikel</h3>
+<form class="loan_new">
+  <input type="hidden"
+         name="page"
+         value="checkout"/>
+  <input type="hidden"
+         name="user"
+         value="¤user¤">
+  <span class="label">Artikel:</span>
+  <input type="text"
+         name="product"
+         placeholder="Serienummer"/>
+  <br/>
+  <span class="label">Slutdatum:</span>
+  <input type="text"
+         name="end_date"
+         value="¤end¤"/>
+  <button disabled>
+      Låna ut
+  </button>
+</form>
+¤subtitle¤
+¤loan_table¤
