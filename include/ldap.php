@@ -18,7 +18,7 @@ class Ldap {
     public function get_user($uid) {
         $data = $this->search("uid=$uid", 'cn', 'uid');
         if($data['count'] !== 1) {
-            throw new Exception("LDAP search for '$uid' returns more than one result"); 
+            throw new Exception("LDAP search for '$uid' did not return exactly one result");
         }
         return $data[0]['cn'][0];
     }
