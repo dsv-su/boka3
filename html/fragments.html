@@ -17,7 +17,7 @@
       method="GET">
   <input type="hidden"
          name="action"
-         value="checkout"/>
+         value="checkout" />
 </form>
 <table>
   <thead>
@@ -96,10 +96,10 @@
       method="get">
   <input type="hidden"
          name="page"
-         value="products"/>
+         value="products" />
   <input type="hidden"
          name="action"
-         value="new"/>
+         value="new" />
   <button>
     Ny artikel
   </button>
@@ -109,10 +109,10 @@
 <form action="./">
   <input type="hidden"
          name="page"
-         value="do"/>
+         value="do" />
   <input type="hidden"
          name="id"
-         value="¤id¤"/>
+         value="¤id¤" />
   <table>
     <tfoot>
       <tr>
@@ -136,7 +136,7 @@
         <td>
           <input type="text"
                  name="name"
-                 value="¤name¤"/>
+                 value="¤name¤" />
         </td>
       </tr>
       <tr>
@@ -146,7 +146,7 @@
         <td>
           <input type="text"
                  name="invoice"
-                 value="¤invoice¤"/>
+                 value="¤invoice¤" />
         </td>
       </tr>
       <tr>
@@ -156,7 +156,7 @@
         <td>
           <input type="text"
                  name="serial"
-                 value="¤serial¤"/>
+                 value="¤serial¤" />
         </td>
       </tr>
       ¤info¤
@@ -164,11 +164,11 @@
         <td>
           <input type="text"
                  name="new_info_key"
-                 placeholder="Nytt fält"/>
+                 placeholder="Nytt fält" />
         </td>
         <td>
           <input type="text"
-                 name="new_info_value"/>
+                 name="new_info_value" />
         </td>
       </tr>
       <tr>
@@ -178,7 +178,7 @@
         <td>
           ¤tags¤ <input type="text"
                         name="new_tag"
-                        placeholder="Ny tagg"/>
+                        placeholder="Ny tagg" />
         </td>
       </tr>
     </tbody>
@@ -193,7 +193,7 @@
   <td>
     <input type="text"
            name="info_¤key¤"
-           value="¤value¤"/>
+           value="¤value¤" />
     <a href="">x</a>
   </td>
 </tr>
@@ -238,7 +238,7 @@
         <td>
           <input type="text"
                  name="name"
-                 value="¤name¤"/>
+                 value="¤name¤" />
         </td>
       </tr>
       <tr>
@@ -258,9 +258,6 @@
 ¤inactive_loans¤
 
 ¤¤ loan_table ¤¤
-<form id="renew"
-      method="GET">
-</form>
 <table>
   <thead>
     <tr>
@@ -304,27 +301,39 @@
     ¤return_date¤
   </td>
   <td class="¤vis_renew¤">
-    <button form="renew"
-            name="product"
-            value="¤id¤">
-      Förläng
-    </button>
+    <form class="renew_button hidden">
+      <button>
+        Förläng
+      </button>
+    </form>
+    <form class="renew_confirm">
+      <input type="hidden"
+             name="product"
+             value="¤id¤" />
+      <input class="narrow"
+             type="text"
+             name="end"
+             value="¤end_new¤" />
+      <button>
+        Spara
+      </button>
+    </div>
   </td>
 </tr>
 
 ¤¤ checkout_page ¤¤
 <h3>Välj låntagare</h3>
-<form class="loan_base"
+<form class="dark"
       action="./"
       method="GET">
   <input type="hidden"
          name="page"
-         value="checkout"/>
+         value="checkout" />
   <span class="label">Användarnamn:</span>
   <input type="text"
          name="user"
          placeholder="Användarnamn"
-         value="¤user¤" required/>
+         value="¤user¤" required />
   <button type="submit" >
     Välj
   </button>
@@ -333,28 +342,87 @@
   <input type="text"
          name="displayname"
          value="¤displayname¤"
-         disabled/>
+         disabled />
 </form>
 <h3>Låna ut artikel</h3>
-<form class="loan_new">
+<form class="light">
   <input type="hidden"
          name="page"
-         value="checkout"/>
+         value="checkout" />
   <input type="hidden"
          name="user"
          value="¤user¤">
   <span class="label">Artikel:</span>
   <input type="text"
          name="product"
-         placeholder="Serienummer"/>
+         placeholder="Serienummer" />
   <br/>
   <span class="label">Slutdatum:</span>
   <input type="text"
          name="end_date"
-         value="¤end¤"/>
+         value="¤end¤" />
   <button disabled>
       Låna ut
   </button>
 </form>
 ¤subtitle¤
 ¤loan_table¤
+
+¤¤ inventory_start ¤¤
+<form class="dark">
+  <button name="start">
+    Starta inventering
+  </button>
+</form>
+
+¤¤ inventory_do ¤¤
+<p class="dark">
+  <span class="label">
+    Startdatum:
+  </span>
+  ¤start_date¤
+  <br/>
+  <span class="label">
+    Totalt antal artiklar:
+  </span>
+  ¤total_count¤
+  <br/>
+  <span class="label">
+    Inventerade artiklar:
+  </span>
+  <span id="seen_count">
+    ¤seen_count¤
+  </span>
+  <form class="dark">
+    <button name="end">
+      Avsluta inventering
+    </button>
+  </form>
+</p>
+<form class="light">
+  <span class="label">
+    Artikelnummer:
+  </span>
+  <input type="text"
+         name="serial" />
+  <button>
+    Registrera
+  </button>
+</form>
+¤seen_title¤
+¤seen_table¤
+¤unseen_title¤
+¤unseen_table¤
+
+¤¤ return_page ¤¤
+<form class="dark">
+  <span class="label">
+    Artikelnummer:
+  </span>
+  <input type="text"
+         name="serial"
+         required />
+  <button>
+    Lämna tillbaka
+  </button>
+</form>
