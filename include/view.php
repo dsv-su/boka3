@@ -17,6 +17,8 @@ function make_page($page) {
             return new ProductPage();
         case 'users':
             return new UserPage();
+        case 'inventory':
+            return new InventoryPage();
     }
 }
 
@@ -201,7 +203,7 @@ abstract class Page {
                 $status = 'overdue';
             }
             $returndate = '';
-            if(isset($duration['return'])) {
+            if($duration['return'] !== null) {
                 $returndate = $duration['return'];
             }
             $rows .= replace(array('id' => $product->get_id(),
@@ -211,7 +213,8 @@ abstract class Page {
                                    'return_date' => $returndate,
                                    'status' => $status,
                                    'vis_renew' => $vis_renew,
-                                   'vis_return' => $vis_return
+                                   'vis_return' => $vis_return,
+                                   'end_new' => $duration['end_renew']
             ), $this->fragments['loan_row']);
         }
         return replace(array('rows' => $rows,
@@ -457,6 +460,7 @@ class CheckoutPage extends Page {
         $username = '';
         $displayname = '';
         $loan_table = '';
+        $subhead = '';
         $enddate = gmdate('Y-m-d', time() + 604800); # 1 week from now
         if($this->user !== null) {
             $username = $this->user->get_name();
@@ -466,10 +470,10 @@ class CheckoutPage extends Page {
             if($loans) {
                 $loan_table = $this->build_user_loan_table($loans, 'renew');
             }
+            $subhead = replace(array(
+                'title' => 'Lånade artiklar'
+            ), $this->fragments['subtitle']);
         }
-        $subhead = replace(array(
-            'title' => 'Lånade artiklar'
-        ), $this->fragments['subtitle']);
         print(replace(array('user' => $this->userstr,
                             'displayname' => $displayname,
                             'end' => $enddate,
@@ -485,7 +489,54 @@ class ReturnPage extends Page {
     }
 
     protected function render_body() {
-        
+        print($this->fragments['return_page']);
+    }
+}
+
+class InventoryPage extends Page {
+    private $inventory = null;
+    
+    public function __construct() {
+        parent::__construct();
+        $this->inventory = Inventory::get_active();
+    }
+
+    protected function render_body() {
+        if($this->inventory === null) {
+            print($this->fragments['inventory_start']);
+            return;
+        }
+        $duration = $this->inventory->get_duration();
+        $all_products = get_items('product');
+        $total = count($all_products);
+        $on_loan = $this->inventory->get_products_on_loan();
+        $seen = $this->inventory->get_seen_products();
+        $inventoried = $seen;
+        foreach($on_loan as $product) {
+            if(!in_array($product, $inventoried)) {
+                $inventoried[] = $product;
+            }
+        }
+        $unseen = array();
+        foreach($all_products as $product) {
+            if(!in_array($product, $inventoried)) {
+                $unseen[] = $product;
+            }
+        }
+        $seen_title = replace(array('title' => 'Inventerade artiklar'),
+                              $this->fragments['subtitle']);
+        $unseen_title = replace(array('title' => 'Kvarvarande artiklar'),
+                              $this->fragments['subtitle']);
+        $seen_table = $this->build_product_table($inventoried);
+        $unseen_table = $this->build_product_table($unseen);
+        print(replace(array('start_date' => $duration['start'],
+                            'total_count' => $total,
+                            'seen_count' => count($on_loan) + count($seen),
+                            'seen_title' => $seen_title,
+                            'seen_table' => $seen_table,
+                            'unseen_title' => $unseen_title,
+                            'unseen_table' => $unseen_table
+        ), $this->fragments['inventory_do']));
     }
 }
 ?>
