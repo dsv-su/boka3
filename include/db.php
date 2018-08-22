@@ -3,17 +3,26 @@ require_once('./include/sql.php');
 require_once('./include/ldap.php');
 
 function get_ids($type) {
+    $only_active = false;
     switch($type) {
         case 'user':
         case 'product':
         case 'loan':
+            break;
+        case 'active_loan':
+            $only_active = true;
+            $type = 'loan';
             break;
         default:
             $err = "$type is not a valid argument. Valid arguments are user, product, loan.";
             throw new Exception($err);
             break;
     }
-    $get = prepare("select `id` from `$type`");
+    $query = "select `id` from `$type`";
+    if($only_active) {
+        $query .= ' where `returntime` is null';
+    }
+    $get = prepare($query);
     execute($get);
     $ids = array();
     foreach(result_list($get) as $row) {
@@ -51,6 +60,16 @@ function get_items($type) {
         $list[] = $construct($id);
     }
     return $list;
+}
+
+function get_tags() {
+    $search = prepare('select distinct `tag` from `product_tag`');
+    execute($search);
+    $out = array();
+    foreach(result_list($search) as $row) {
+        $out[] = $row['tag'];
+    }
+    return $out;
 }
 
 function search_products($term) {
@@ -119,8 +138,10 @@ class Product {
         $info = array(),
         $tags = array()
     ) {
-        $ins_prod = prepare('insert into `product`(`name`, `invoice`, `serial`) values (?, ?, ?)');
-        bind($ins_prod, 'sss', $name, $invoice, $serial);
+        $now = time();
+        $stmt = 'insert into `product`(`name`, `invoice`, `serial`, `createtime`) values (?, ?, ?, ?)';
+        $ins_prod = prepare($stmt);
+        bind($ins_prod, 'sssi', $name, $invoice, $serial, $now);
         execute($ins_prod);
         $prodid = $ins_prod->insert_id;
         $ins_info = prepare('insert into `product_info`(`product`, `field`, `data`) values (?, ?, ?)');
@@ -470,12 +491,10 @@ class Loan {
                 return gmdate('Y-m-d', $time);
             };
         }
-        $out = array('start' => $style($this->starttime),
-                     'end' => $style($this->endtime));
-        if($this->returntime !== null) {
-            $out['return'] = $style($this->returntime);
-        }
-        return $out;
+        return array('start' => $style($this->starttime),
+                     'end' => $style($this->endtime),
+                     'end_renew' => $style($this->endtime + 604800), # +1 week
+                     'return' => $style($this->returntime));
     }
 
     public function is_active() {
@@ -503,6 +522,107 @@ class Loan {
             return true;
         }
         return false;
+    }
+}
+
+class Inventory {
+    private $id = '';
+    private $starttime = '';
+    private $endtime = null;
+    private $seen_products = array();
+    private $active_loans = array();
+
+    public static function begin() {
+        if(Inventory::get_active_inventory() !== null) {
+            throw new Exception('Inventory already in progress.');
+        }
+        $now = time();
+        $start = prepare('insert into `inventory`(`starttime`) values (?)');
+        bind($start, 'i', $now);
+        execute($start);
+        return new Inventory($start->insert_id);
+    }
+
+    public static function get_active() {
+        $search = prepare('select * from `inventory` where `endtime` is null');
+        execute($search);
+        $result = result_single($search);
+        if($result === null) {
+            return null;
+        }
+        return new Inventory($result['id']);
+    }
+    
+    public function __construct($id) {
+        $this->id = $id;
+        $this->update_fields();
+    }
+
+    private function update_fields() {
+        $get = prepare('select * from `inventory` where `id`=?');
+        bind($get, 'i', $this->id);
+        execute($get);
+        $result = result_single($get);
+        $this->starttime = $result['starttime'];
+        $this->endtime = $result['endtime'];
+        $prodget = prepare('select * from `inventory_product` where `inventory`=?');
+        bind($prodget, 'i', $this->id);
+        execute($prodget);
+        foreach(result_list($prodget) as $row) {
+            $this->seen_products[] = $row['product'];
+        }
+        $this->active_loans = get_ids('active_loan');
+    }
+
+    public function end() {
+        $now = time();
+        $update = prepare('update `inventory` set `endtime`=? where `id`=? and `endtime` is null');
+        bind($update, 'ii', $now, $this->id);
+        execute($update);
+        $this->endtime = $now;
+        return true;
+    }
+
+    public function add_product($product) {
+        $add = prepare('insert into `inventory_product`(`inventory`, `product`) values (?, ?)');
+        bind($add, 'ii', $this->id, $product->get_id());
+        execute($add);
+        $this->products[] = $product->get_id();
+        return true;
+    }
+    
+    public function get_id() {
+        return $this->id;
+    }
+
+    public function get_duration($format = true) {
+        $style = function($time) {
+            return $time;
+        };
+        if($format) {
+            $style = function($time) {
+                return gmdate('Y-m-d', $time);
+            };
+        }
+        return array('start' => $style($this->starttime),
+                     'end' => $style($this->endtime));
+    }
+
+    public function get_seen_products() {
+        $out = array();
+        foreach($this->seen_products as $prodid) {
+            $out[] = new Product($prodid);
+        }
+        return $out;
+    }
+
+    public function get_products_on_loan() {
+        $out = array();
+        foreach($this->active_loans as $loanid) {
+            $loan = new Loan($loanid);
+            $out[] = $loan->get_product();
+        }
+        return $out;
     }
 }
 
