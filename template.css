@@ -79,6 +79,10 @@ input[type="text"] {
     padding-right: 4px;
 }
 
+input[type="text"], textarea {
+    width: 13em;
+}
+
 /*
 input, button, select {
     vertical-align: middle;
