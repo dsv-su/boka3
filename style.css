@@ -20,16 +20,20 @@
     min-width: 100px;
 }
 
-.loan_base {
+.dark {
     padding: 5px;
     margin-bottom: 0;
     background-color: #d7e0eb;
 }
 
-.loan_new {
+.light {
     margin-top: 0;
     padding: 5px;
     background-color: #ebf0f5;
+}
+
+.narrow {
+    width: 6em !important;
 }
 
 .hidden {
