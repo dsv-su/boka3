@@ -3,7 +3,8 @@ create table `product` (
   primary key(`id`),
   `name` varchar(64) not null,
   `invoice` varchar(64) not null,
-  `serial` varchar(64) not null
+  `serial` varchar(64) not null,
+  `createtime` bigint(20) not null
 ) character set utf8mb4,
   collate utf8mb4_unicode_ci;
 
@@ -52,6 +53,25 @@ create table `loan` (
   `starttime` bigint(20) not null,
   `endtime` bigint(20) not null,
   `returntime` bigint(20) default null
+) character set utf8mb4,
+  collate utf8mb4_unicode_ci;
+
+create table `inventory` (
+  `id` bigint(20) not null auto_increment,
+  primary key(`id`),
+  `starttime` bigint(20) not null,
+  `endtime` bigint(20) default null
+) character set utf8mb4,
+  collate utf8mb4_unicode_ci;
+
+create table `inventory_items` (
+  `inventory` bigint(20) not null,
+  constraint `i_f_inventory`
+    foreign key(`inventory`) references `inventory`(`id`),
+  `product` bigint(20) not null,
+  constraint `i_f_product`
+    foreign key(`product`) references `product`(`id`),
+  unique `uniq_inventory_product`(`inventory`, `product`)
 ) character set utf8mb4,
   collate utf8mb4_unicode_ci;
 
