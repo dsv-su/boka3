@@ -64,7 +64,9 @@ create table `inventory` (
 ) character set utf8mb4,
   collate utf8mb4_unicode_ci;
 
-create table `inventory_items` (
+create table `inventory_product` (
+  `id` bigint(20) not null auto_increment,
+  primary key(`id`),
   `inventory` bigint(20) not null,
   constraint `i_f_inventory`
     foreign key(`inventory`) references `inventory`(`id`),
