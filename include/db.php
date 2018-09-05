@@ -3,24 +3,37 @@ require_once('./include/sql.php');
 require_once('./include/ldap.php');
 
 function get_ids($type) {
-    $only_active = false;
+    $append = '';
     switch($type) {
         case 'user':
+            break;
         case 'product':
+            $append = 'where `discardtime` is null';
+            break;
         case 'loan':
             break;
-        case 'active_loan':
-            $only_active = true;
+        case 'inventory':
+            break;
+        case 'product_discarded':
+            $append = 'where `discardtime` is not null';
+            $type = 'product';
+            break;
+        case 'loan_active':
+            $append = 'where `returntime` is null';
             $type = 'loan';
             break;
+        case 'inventory_old':
+            $append = 'where `endtime` is not null order by `id` desc';
+            $type = 'inventory';
+            break;
         default:
-            $err = "$type is not a valid argument. Valid arguments are user, product, loan.";
+            $err = "$type is not a valid argument.";
             throw new Exception($err);
             break;
     }
     $query = "select `id` from `$type`";
-    if($only_active) {
-        $query .= ' where `returntime` is null';
+    if($append) {
+        $query .= " $append";
     }
     $get = prepare($query);
     execute($get);
@@ -40,17 +53,25 @@ function get_items($type) {
             };
             break;
         case 'product':
+        case 'product_discarded':
             $construct = function($id) {
                 return new Product($id);
             };
             break;
         case 'loan':
+        case 'loan_active':
             $construct = function($id) {
                 return new Loan($id);
             };
             break;
+        case 'inventory':
+        case 'inventory_old':
+            $construct = function($id) {
+                return new Inventory($id);
+            };
+            break;
         default:
-            $err = "$type is not a valid argument. Valid arguments are user, product, loan.";
+            $err = "$type is not a valid argument.";
             throw new Exception($err);
             break;
     }
@@ -63,11 +84,21 @@ function get_items($type) {
 }
 
 function get_tags() {
-    $search = prepare('select distinct `tag` from `product_tag`');
+    $search = prepare('select distinct `tag` from `product_tag` order by `tag`');
     execute($search);
     $out = array();
     foreach(result_list($search) as $row) {
         $out[] = $row['tag'];
+    }
+    return $out;
+}
+
+function get_fields() {
+    $search = prepare('select distinct `field` from `product_info` order by `field`');
+    execute($search);
+    $out = array();
+    foreach(result_list($search) as $row) {
+        $out[] = $row['field'];
     }
     return $out;
 }
@@ -122,12 +153,13 @@ function search_loans($products) {
     return $out;
 }
 
-
 class Product {
     private $id = 0;
     private $name = '';
     private $invoice = '';
     private $serial = '';
+    private $createtime = null;
+    private $discardtime = null;
     private $info = array();
     private $tags = array();
     
@@ -139,26 +171,49 @@ class Product {
         $tags = array()
     ) {
         $now = time();
-        $stmt = 'insert into `product`(`name`, `invoice`, `serial`, `createtime`) values (?, ?, ?, ?)';
-        $ins_prod = prepare($stmt);
-        bind($ins_prod, 'sssi', $name, $invoice, $serial, $now);
-        execute($ins_prod);
-        $prodid = $ins_prod->insert_id;
-        $ins_info = prepare('insert into `product_info`(`product`, `field`, `data`) values (?, ?, ?)');
-        bind($ins_info, 'iss', $prodid, $key, $value);
-        foreach($ins_info as $key => $value) {
-            execute($ins_info);
+        begin_trans();
+        try {
+            $stmt = 'insert into `product`(`name`, `invoice`, `serial`, `createtime`) values (?, ?, ?, ?)';
+            $ins_prod = prepare($stmt);
+            bind($ins_prod, 'sssi', $name, $invoice, $serial, $now);
+            execute($ins_prod);
+            $prodid = $ins_prod->insert_id;
+            $ins_info = prepare('insert into `product_info`(`product`, `field`, `data`) values (?, ?, ?)');
+            foreach($info as $key => $value) {
+                bind($ins_info, 'iss', $prodid, $key, $value);
+                execute($ins_info);
+            }
+            $ins_tag = prepare('insert into `product_tag`(`product`, `tag`) values (?, ?)');
+            foreach($tags as $tag) {
+                bind($ins_tag, 'is', $prodid, $tag);
+                execute($ins_tag);
+            }
+            commit_trans();
+            return new Product($prodid);
+        } catch(Exception $e) {
+            revert_trans();
+            throw $e;
         }
-        $ins_tag = prepare('insert into `product_tag`(`product`, `tag`) values (?, ?)');
-        bind($ins_tag, 'is', $prodid, $tag);
-        foreach($tags as $tag) {
-            execute($ins_tag);
-        }
-        return new Product($prodid);
     }
     
-    public function __construct($id) {
-        $this->id = $id;
+    public function __construct($clue, $type = 'id') {
+        switch($type) {
+            case 'id':
+                $this->id = $clue;
+                break;
+            case 'serial':
+                $search = prepare('select `id` from `product` where `serial`=?');
+                bind($search, 's', $clue);
+                execute($search);
+                $result = result_single($search);
+                if($result === null) {
+                    throw new Exception('Invalid serial.');
+                }
+                $this->id = $result['id'];
+                break;
+            default:
+                throw new Exception('Invalid type.');
+        }
         $this->update_fields();
         $this->update_info();
         $this->update_tags();
@@ -172,11 +227,13 @@ class Product {
         $this->name = $product['name'];
         $this->invoice = $product['invoice'];
         $this->serial = $product['serial'];
+        $this->createtime = $product['createtime'];
+        $this->discardtime = $product['discardtime'];
         return true;
     }
     
     private function update_info() {
-        $get = prepare('select * from `product_info` where `product`=?');
+        $get = prepare('select * from `product_info` where `product`=? order by `field`');
         bind($get, 'i', $this->id);
         execute($get);
         foreach(result_list($get) as $row) {
@@ -188,7 +245,7 @@ class Product {
     }
     
     private function update_tags() {
-        $get = prepare('select * from `product_tag` where `product`=?');
+        $get = prepare('select * from `product_tag` where `product`=? order by `tag`');
         bind($get, 'i', $this->id);
         execute($get);
         $newtags = array();
@@ -201,6 +258,26 @@ class Product {
     
     public function get_id() {
         return $this->id;
+    }
+
+    public function get_createtime() {
+        return $this->createtime;
+    }
+
+    public function get_discardtime($format = true) {
+        if($format) {
+            return gmdate('Y-m-d', $this->discardtime);
+        }
+        return $this->discardtime;
+    }
+
+    public function discard() {
+        $now = time();
+        $update = prepare('update `product` set `discardtime`=? where `id`=?');
+        bind($update, 'ii', $now, $this->id);
+        execute($update);
+        $this->discardtime = $now;
+        return true;
     }
     
     public function get_name() {
@@ -244,7 +321,7 @@ class Product {
     }
     
     public function set_info($field, $value) {
-        $find = prepare('select * from `product_info` where `id`=? and `field`=?');
+        $find = prepare('select * from `product_info` where `product`=? and `field`=?');
         bind($find, 'is', $this->id, $field);
         execute($find);
         if(result_single($find) === null) {
@@ -341,16 +418,22 @@ class User {
         return new User($ins_user->insert_id);
     }
 
-    public function __construct($clue) {
+    public function __construct($clue, $type = 'id') {
         $id = $clue;
-        if(preg_match('/[a-z]/', $clue)) {
-            $find = prepare('select `id` from `user` where `name`=?');
-            bind($find, 's', $clue);
-            execute($find);
-            $id = result_single($find)['id'];
-            if($id === null) {
-                throw new Exception("Invalid username '$clue'");
-            }
+        switch($type) {
+            case 'id':
+                break;
+            case 'name':
+                $find = prepare('select `id` from `user` where `name`=?');
+                bind($find, 's', $clue);
+                execute($find);
+                $id = result_single($find)['id'];
+                if($id === null) {
+                    throw new Exception("Invalid username '$clue'");
+                }
+                break;
+            default:
+                throw new Exception('Invalid type');
         }
         $this->id = $id;
         $this->update_fields();
@@ -368,7 +451,11 @@ class User {
 
     public function get_displayname() {
         global $ldap;
-        return $ldap->get_user($this->name);
+        try {
+            return $ldap->get_user($this->name);
+        } catch(Exception $e) {
+            return 'Ej i SUKAT';
+        }
     }
 
     public function get_id() {
@@ -438,10 +525,12 @@ class User {
         }
         $now = time();
         $insert = prepare('insert into `loan`(`user`, `product`, `starttime`, `endtime`) values (?, ?, ?, ?)');
-        bind($insert, 'iiii', $this->id, $prod_id, $now, $endtime);
+        bind($insert, 'iiii',
+             $this->id, $prod_id,
+             $now, strtotime($endtime . ' 13:00'));
         execute($insert);
-        $loan_id = $statement->insert_id;
-        return new Loan($id);
+        $loan_id = $insert->insert_id;
+        return new Loan($loan_id);
     }
 }
 
@@ -488,7 +577,10 @@ class Loan {
         };
         if($format) {
             $style = function($time) {
-                return gmdate('Y-m-d', $time);
+                if($time) {
+                    return gmdate('Y-m-d', $time);
+                }
+                return $time;
             };
         }
         return array('start' => $style($this->starttime),
@@ -503,12 +595,21 @@ class Loan {
         }
         return false;
     }
+
+    public function extend($time) {
+        $ts = strtotime($time . ' 13:00');
+        $query = prepare('update `loan` set `endtime`=? where `id`=?');
+        bind($query, 'ii', $ts, $this->id);
+        execute($query);
+        $this->endtime = $ts;
+        return true;
+    }
     
-    public function end_loan() {
+    public function end() {
         $now = time();
-        $end = prepare('update `loan` set `returntime`=? where `id`=?');
-        bind($end, 'ii', $now, $this->id);
-        execute($end);
+        $query = prepare('update `loan` set `returntime`=? where `id`=?');
+        bind($query, 'ii', $now, $this->id);
+        execute($query);
         $this->returntime = $now;
         return true;
     }
@@ -530,17 +631,24 @@ class Inventory {
     private $starttime = '';
     private $endtime = null;
     private $seen_products = array();
-    private $active_loans = array();
 
     public static function begin() {
-        if(Inventory::get_active_inventory() !== null) {
+        if(Inventory::get_active() !== null) {
             throw new Exception('Inventory already in progress.');
         }
         $now = time();
         $start = prepare('insert into `inventory`(`starttime`) values (?)');
         bind($start, 'i', $now);
         execute($start);
-        return new Inventory($start->insert_id);
+        $invid = $start->insert_id;
+        $prodid = '';
+        $register = prepare('insert into `inventory_product`(`inventory`, `product`) values (?, ?)');
+        foreach(get_items('loan_active') as $loan) {
+            $prodid = $loan->get_product()->get_id();
+            bind($register, 'ii', $invid, $prodid);
+            execute($register);
+        }
+        return new Inventory($invid);
     }
 
     public static function get_active() {
@@ -571,7 +679,6 @@ class Inventory {
         foreach(result_list($prodget) as $row) {
             $this->seen_products[] = $row['product'];
         }
-        $this->active_loans = get_ids('active_loan');
     }
 
     public function end() {
@@ -586,7 +693,11 @@ class Inventory {
     public function add_product($product) {
         $add = prepare('insert into `inventory_product`(`inventory`, `product`) values (?, ?)');
         bind($add, 'ii', $this->id, $product->get_id());
-        execute($add);
+        try {
+            execute($add);
+        } catch(Exception $e) {
+            return false;
+        }
         $this->products[] = $product->get_id();
         return true;
     }
@@ -616,11 +727,28 @@ class Inventory {
         return $out;
     }
 
-    public function get_products_on_loan() {
+    public function get_unseen_products() {
+        $all = get_items('product');
         $out = array();
-        foreach($this->active_loans as $loanid) {
-            $loan = new Loan($loanid);
-            $out[] = $loan->get_product();
+        $include = function($product) {
+            if(!in_array($product->get_id(), $this->seen_products)) {
+                return true;
+            }
+            return false;
+        };
+        if($this->endtime) {
+            $include = function($product) {
+                if($product->get_createtime() < $this->endtime
+                    && !in_array($product->get_id(), $this->seen_products)) {
+                    return true;
+                }
+                return false;
+            };
+        }
+        foreach($all as $product) {
+            if($include($product)) {
+                $out[] = $product;
+            }
         }
         return $out;
     }

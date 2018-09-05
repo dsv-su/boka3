@@ -7,8 +7,10 @@
 ¤¤ item_link ¤¤
 <a href="./?page=¤page¤&action=show&id=¤id¤">¤name¤</a>
 
-¤¤ error ¤¤
-<div id="error">
+¤¤ message ¤¤
+<div onClick="JavaScript:hideMessage(event)"
+     id="message"
+     class="¤type¤">
   ¤message¤
 </div>
 
@@ -43,7 +45,7 @@
 ¤¤ user_row ¤¤
 <tr>
   <td>
-    ¤item_link¤
+    ¤item_link¤<span title="¤notes¤">¤has_notes¤</span>
   </td>
   <td>
     ¤name¤
@@ -106,10 +108,7 @@
 </form>
 
 ¤¤ product_details ¤¤
-<form action="./">
-  <input type="hidden"
-         name="page"
-         value="do" />
+<form onSubmit="JavaScript:saveProduct(event)">
   <input type="hidden"
          name="id"
          value="¤id¤" />
@@ -119,10 +118,12 @@
         <td>
         </td>
         <td>
-          <button class="right" disabled>
+          <button id="save"
+                  class="right">
             Spara
           </button>
-          <button class="right" disabled>
+          <button id="reset"
+                  class="right">
             Återställ
           </button>
         </td>
@@ -162,13 +163,17 @@
       ¤info¤
       <tr>
         <td>
-          <input type="text"
-                 name="new_info_key"
+          <input onKeyPress="addField(event)"
+                 class="newfield"
+                 type="text"
+                 name="new_key"
                  placeholder="Nytt fält" />
+          <button class="minibutton"
+                  onClick="addField(event)">
+            +
+          </button>
         </td>
         <td>
-          <input type="text"
-                 name="new_info_value" />
         </td>
       </tr>
       <tr>
@@ -176,9 +181,16 @@
           Taggar:
         </td>
         <td>
-          ¤tags¤ <input type="text"
-                        name="new_tag"
-                        placeholder="Ny tagg" />
+          ¤tags¤
+          <input onKeyPress="JavaScript:addTag(event)"
+                 class="newtag"
+                 type="text"
+                 name="new_tag"
+                 placeholder="Ny tagg" />
+          <button class="minibutton"
+                  onClick="JavaScript:addTag(event)">
+            +
+          </button>
         </td>
       </tr>
     </tbody>
@@ -188,35 +200,44 @@
 ¤¤ info_item ¤¤
 <tr>
   <td>
-    ¤key¤:
+    ¤name¤:
   </td>
   <td>
     <input type="text"
-           name="info_¤key¤"
+           name="¤key¤"
            value="¤value¤" />
-    <a href="">x</a>
   </td>
 </tr>
 
 ¤¤ tag ¤¤
 <p>
-  <span class="tag">
-    ¤tag¤ <a href="">x</a>
+  <span class="tag"
+        data-name="¤tag¤">
+    ¤tag¤
+    <a class="tagremove"
+       onClick="JavaScript:removeTag(event)">
+      x
+    </a>
   </span>
 </p>
 
 ¤¤ user_details ¤¤
-<form>
+<form onSubmit="JavaScript:updateUser(event)">
+  <input type="hidden"
+         name="id"
+         value="¤id¤" />
   <table>
     <tfoot>
       <tr>
         <td>
         </td>
         <td>
-          <button class="right" disabled>
+          <button class="right"
+                  id="save">
             Spara
           </button>
-          <button class="right" disabled>
+          <button class="right"
+                  id="reset">
             Återställ
           </button>
         </td>
@@ -228,7 +249,9 @@
           Namn:
         </td>
         <td>
-          ¤displayname¤
+          <input type="text"
+                 value="¤displayname¤"
+                 disabled />
         </td>
       </tr>
       <tr>
@@ -246,7 +269,7 @@
           Anteckningar:
         </td>
         <td>
-          <textarea>¤notes¤</textarea>
+          <textarea name="notes">¤notes¤</textarea>
         </td>
       </tr>
     </tbody>
@@ -301,12 +324,14 @@
     ¤return_date¤
   </td>
   <td class="¤vis_renew¤">
-    <form class="renew_button hidden">
-      <button>
+    <form class="renew_button"
+          onSubmit="JavaScript:showExtend(event)">
+      <button class="¤vis_renew_button¤">
         Förläng
       </button>
     </form>
-    <form class="renew_confirm">
+    <form class="renew_confirm hidden"
+          onSubmit="JavaScript:extendLoan(event)">
       <input type="hidden"
              name="product"
              value="¤id¤" />
@@ -317,7 +342,7 @@
       <button>
         Spara
       </button>
-    </div>
+    </form>
   </td>
 </tr>
 
@@ -329,23 +354,28 @@
   <input type="hidden"
          name="page"
          value="checkout" />
-  <span class="label">Användarnamn:</span>
+  <span class="label">
+    Användarnamn:
+  </span>
   <input type="text"
          name="user"
          placeholder="Användarnamn"
-         value="¤user¤" required />
+         value="¤user¤" />
   <button type="submit" >
     Välj
   </button>
   <br/>
-  <span class="label">Namn:</span>
+  <span class="label">
+    Namn:
+  </span>
   <input type="text"
          name="displayname"
          value="¤displayname¤"
          disabled />
 </form>
 <h3>Låna ut artikel</h3>
-<form class="light">
+<form class="light"
+      onSubmit="JavaScript:checkoutProduct(event)">
   <input type="hidden"
          name="page"
          value="checkout" />
@@ -355,21 +385,23 @@
   <span class="label">Artikel:</span>
   <input type="text"
          name="product"
-         placeholder="Serienummer" />
+         placeholder="Serienummer"
+         required />
+  <button>
+      Låna ut
+  </button>
   <br/>
   <span class="label">Slutdatum:</span>
   <input type="text"
-         name="end_date"
+         name="end"
          value="¤end¤" />
-  <button disabled>
-      Låna ut
-  </button>
 </form>
 ¤subtitle¤
 ¤loan_table¤
 
 ¤¤ inventory_start ¤¤
-<form class="dark">
+<form class="dark"
+      onSubmit="JavaScript:startInventory(event)">
   <button name="start">
     Starta inventering
   </button>
@@ -393,18 +425,21 @@
   <span id="seen_count">
     ¤seen_count¤
   </span>
-  <form class="dark">
+  <form class="dark ¤hide¤"
+        onSubmit="JavaScript:endInventory(event)">
     <button name="end">
       Avsluta inventering
     </button>
   </form>
 </p>
-<form class="light">
+<form class="light ¤hide¤"
+      onSubmit="JavaScript:inventoryProduct(event)">
   <span class="label">
-    Artikelnummer:
+    Artikel:
   </span>
   <input type="text"
-         name="serial" />
+         name="serial"
+         placeholder="Serienummer" />
   <button>
     Registrera
   </button>
@@ -415,14 +450,65 @@
 ¤unseen_table¤
 
 ¤¤ return_page ¤¤
-<form class="dark">
+<form class="dark"
+      onSubmit="JavaScript:returnProduct(event)">
   <span class="label">
-    Artikelnummer:
+    Artikel:
   </span>
   <input type="text"
          name="serial"
+         placeholder="Serienummer"
          required />
   <button>
     Lämna tillbaka
   </button>
 </form>
+
+¤¤ inventory_table ¤¤
+<table>
+  <thead>
+    <tr>
+      <th>
+      </th>
+      <th>
+        ¤item¤
+      </th>
+      <th>
+        Startdatum
+      </th>
+      <th>
+        Slutdatum
+      </th>
+      <th>
+        Inventerade artiklar
+      </th>
+      <th>
+        Saknade artiklar
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    ¤rows¤
+  </tbody>
+</table>
+
+¤¤ inventory_row ¤¤
+<tr>
+  <td>
+  </td>
+  <td>
+    ¤item_link¤
+  </td>
+  <td>
+    ¤start_date¤
+  </td>
+  <td>
+    ¤end_date¤
+  </td>
+  <td>
+    ¤num_seen¤
+  </td>
+  <td>
+    ¤num_unseen¤
+  </td>
+</tr>

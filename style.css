@@ -1,18 +1,31 @@
-#error {
-    position: absolute;
+textarea {
+    height: 80px;
+}
+
+#message {
+   position: absolute;
     top: 5px;
     left: 50%;
     transform: translate(-50%);
-    background-color: #e89e66;
-    border: 2px solid #d95e00;
     padding: 6px 10px;
+    border-style: solid;
+    border-width: 2px;
+}
+
+.error {
+    background-color: #e89e66;
+    border-color: #d95e00;
+}
+
+.success {
+    background-color: #c8cba6;
+    border-color: #a3a86b;
 }
 
 .tag {
     margin: 1px;
-    border: 1px solid black;
-    padding: 1px 2px;
-    background-color: lightgray;
+    background-color: #acdee6;
+    padding-left: 2px;
 }
 
 .label {
@@ -83,26 +96,28 @@ input:disabled {
     background-color: #ededed;
 }
 
-.button {
+.newtag, .newfield {
+    width: 11.5em !important;
+}
+
+.minibutton {
     font-family: Verdana, Arial, Helvetica, sans-serif;
     background-image: url(images/button-background-repeater.gif);
     background-position: left;
     background-repeat: repeat-x;
-    color: white;
-    padding-left: 10px;
-    padding-right: 10px;
-    text-decoration: none;
-    draggable: false;
+    color: white !important;
+    padding-right: 2px;
+    padding-left: 2px;
 }
 
-.button:link {
-    color: white;
-}
-
-.button:visited {
+.tagremove {
+    background-color: #e17e33;
+    padding-left: 2px;
+    padding-right: 2px;
     color: white;
 }
 
-.button:hover {
+.tagremove:hover {
+    cursor: pointer;
     color: white;
 }
