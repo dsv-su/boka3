@@ -4,7 +4,8 @@ create table `product` (
   `name` varchar(64) not null,
   `invoice` varchar(64) not null,
   `serial` varchar(64) not null,
-  `createtime` bigint(20) not null
+  `createtime` bigint(20) not null,
+  `discardtime` bigint(20) default null
 ) character set utf8mb4,
   collate utf8mb4_unicode_ci;
 
