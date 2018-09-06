@@ -149,6 +149,47 @@ function inventoryProduct(event) {
                 reloadOrError)
 }
 
+function suggest(input, type) {
+    var existing = []
+    switch(type) {
+    default:
+        return showResult({'type':'error',
+                           'message':'Invalid suggestion type.'})
+        break
+    case 'field':
+        var fieldlist = document.querySelectorAll('.info_item')
+        for(var i = 0; i < fieldlist.length; i++) {
+            existing.push(fieldlist[i].name)
+        }
+        break
+    case 'tag':
+        var taglist = document.querySelectorAll('#tags > p')
+        for(var i = 0; i < taglist.length; i++) {
+            var tag = taglist[i].firstElementChild.dataset.name
+            existing.push(tag.toLowerCase())
+        }
+        break
+    }
+    var render = function(result) {
+        var suggestlist = document.querySelector('#' + type + 'list')
+        while(suggestlist.firstChild) {
+            suggestlist.removeChild(suggestlist.firstChild)
+        }
+        var suggestions = result.message
+        for(var i = 0; i < suggestions.length; i++) {
+            var suggestion = suggestions[i]
+            if(existing.indexOf(suggestion) != -1) {
+                continue
+            }
+            var next = document.createElement('option')
+            next.value = suggestion.charAt(0).toUpperCase()
+                + suggestion.slice(1)
+            suggestlist.appendChild(next)
+        }
+    }
+    ajaxRequest('suggest', [['type', type]], render)
+}
+
 function addField(event) {
     if(event.key && event.key != "Enter") {
         return
@@ -158,15 +199,13 @@ function addField(event) {
     var nameField = tr.querySelector('input')
     var form = nameField.form
     if(!nameField.value) {
-        showResult({'type': 'error',
-                    'message': 'Fältet måste ha ett namn.'})
-        return
+        return showResult({'type': 'error',
+                           'message': 'Fältet måste ha ett namn.'})
     }
     var key = nameField.value.toLowerCase()
     if(form.querySelector('input[name="' + key + '"]')) {
-        showResult({'type': 'error',
-                    'message': 'Det finns redan ett fält med det namnet.'})
-        return
+        return showResult({'type': 'error',
+                           'message': 'Det finns redan ett fält med det namnet.'})
     }
     var name = key.charAt(0).toUpperCase() + key.slice(1)
     var render = function(fragment) {
@@ -185,30 +224,27 @@ function addField(event) {
 
 function addTag(event) {
     if(event.key && event.key != "Enter") {
-        return
+        return suggest(event.currentTarget, 'tag')
     }
     event.preventDefault()
     var tr = event.currentTarget.parentNode.parentNode
     var field = tr.querySelector('.newtag')
     var tagname = field.value
     if(!tagname) {
-        showResult({'type': 'error',
-                    'message': 'Taggen måste ha ett namn.'})
-        return
+        return showResult({'type': 'error',
+                           'message': 'Taggen måste ha ett namn.'})
     }
     if(tagname.indexOf(',') > -1) {
-        showResult({'type': 'error',
-                    'message': 'Taggar får inte innehålla kommatecken.'})
-        return
+        return showResult({'type': 'error',
+                           'message': 'Taggar får inte innehålla kommatecken.'})
     }
     tagname = tagname.charAt(0).toUpperCase() + tagname.slice(1)
     var tagElements = tr.querySelectorAll('.tag')
     for(var i = 0; i < tagElements.length; i++) {
         var oldtag = tagElements[i].dataset['name']
         if(tagname.toLowerCase() == oldtag.toLowerCase()) {
-            showResult({'type': 'error',
-                        'message': 'Det finns redan en sån tagg på artikeln.'})
-            return
+            return showResult({'type': 'error',
+                               'message': 'Det finns redan en sån tagg på artikeln.'})
         }
     }
     var render = function(fragment) {

@@ -422,7 +422,7 @@ class ProductPage extends Page {
         }
         $tags = '';
         foreach($this->product->get_tags() as $tag) {
-            $tags .= replace(array('tag' => $tag), $this->fragments['tag']);
+            $tags .= replace(array('tag' => ucfirst($tag)), $this->fragments['tag']);
         }
         $out = replace(array('id' => $this->product->get_id(),
                              'name' => $this->product->get_name(),
@@ -731,6 +731,9 @@ class Ajax extends Responder {
             case 'updateuser':
                 $out = $this->update_user();
                 break;
+            case 'suggest':
+                $out = $this->suggest();
+                break;
         }
         print($out->toJson());
     }
@@ -831,7 +834,7 @@ class Ajax extends Responder {
         $name = $info['name'];
         $serial = $info['serial'];
         $invoice = $info['invoice'];
-        $tags = explode(',', $info['tags']);
+        $tags = explode(',', strtolower($info['tags']));
         foreach(array('id', 'name', 'serial', 'invoice', 'tags') as $key) {
             unset($info[$key]);
         }
@@ -902,6 +905,7 @@ class Ajax extends Responder {
         }
         return new Success('Ändringarna sparade.');
     }
+    
     private function update_user() {
         $id = $_POST['id'];
         $name = $_POST['name'];
@@ -917,6 +921,19 @@ class Ajax extends Responder {
             $user->set_notes($notes);
         }
         return new Success('Ändringarna sparade.');
+    }
+
+    private function suggest() {
+        switch($_POST['type']) {
+            case 'tag':
+                return new Success(get_tags());
+                break;
+            case 'field':
+                return new Success(get_fields());
+                break;
+            default:
+                return new Failure('Invalid type.');
+        }
     }
 }
 

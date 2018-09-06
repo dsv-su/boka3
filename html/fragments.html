@@ -112,6 +112,8 @@
   <input type="hidden"
          name="id"
          value="¤id¤" />
+  <datalist id="fieldlist"></datalist>
+  <datalist id="taglist"></datalist>
   <table>
     <tfoot>
       <tr>
@@ -163,7 +165,10 @@
       ¤info¤
       <tr>
         <td>
-          <input onKeyPress="addField(event)"
+          <input onKeyPress="JavaScript:addField(event)"
+                 onFocus="JavaScript:suggest(this, 'field')"
+                 list="fieldlist"
+                 autocomplete="off"
                  class="newfield"
                  type="text"
                  name="new_key"
@@ -180,9 +185,12 @@
         <td>
           Taggar:
         </td>
-        <td>
+        <td id="tags">
           ¤tags¤
           <input onKeyPress="JavaScript:addTag(event)"
+                 onFocus="JavaScript:suggest(this, 'tag')"
+                 list="taglist"
+                 autocomplete="off"
                  class="newtag"
                  type="text"
                  name="new_tag"
@@ -204,6 +212,7 @@
   </td>
   <td>
     <input type="text"
+           class="info_item"
            name="¤key¤"
            value="¤value¤" />
   </td>
