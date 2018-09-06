@@ -340,3 +340,21 @@ function calendar(event) {
         cal.show()
     }
 }
+
+function discardProduct(event) {
+    event.preventDefault()
+    if(!window.confirm(
+        'Är du säker på att du vill skrota artikeln? \n'
+            + 'Den kommer fortsättningsvis kunna ses på Historik-sidan.')) {
+        return
+    }
+    var form = event.currentTarget.parentNode
+    var render = function(result) {
+        if(result.type == 'success') {
+            window.location.href = '?page=products'
+        } else {
+            showResult(result)
+        }
+    }
+    ajaxRequest('discardproduct', dataListFromForm(form), render)
+}

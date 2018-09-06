@@ -265,7 +265,7 @@ class Product {
     }
 
     public function get_discardtime($format = true) {
-        if($format) {
+        if($this->discardtime && $format) {
             return gmdate('Y-m-d', $this->discardtime);
         }
         return $this->discardtime;

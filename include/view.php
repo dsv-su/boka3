@@ -422,7 +422,8 @@ class ProductPage extends Page {
         }
         $tags = '';
         foreach($this->product->get_tags() as $tag) {
-            $tags .= replace(array('tag' => ucfirst($tag)), $this->fragments['tag']);
+            $tags .= replace(array('tag' => ucfirst($tag)),
+                             $this->fragments['tag']);
         }
         $out = replace(array('id' => $this->product->get_id(),
                              'name' => $this->product->get_name(),
@@ -431,6 +432,8 @@ class ProductPage extends Page {
                              'tags' => $tags,
                              'info' => $info),
                        $this->fragments['product_details']);
+        $out .= replace(array('id' => $this->product->get_id()),
+                        $this->fragments['discard_button']);
         $out .= replace(array('title' => 'Lånehistorik'),
                         $this->fragments['subtitle']);
         $loan_table = 'Inga lån att visa.';
@@ -734,6 +737,8 @@ class Ajax extends Responder {
             case 'suggest':
                 $out = $this->suggest();
                 break;
+            case 'discardproduct':
+                $out = $this->discard_product();
         }
         print($out->toJson());
     }
@@ -933,6 +938,16 @@ class Ajax extends Responder {
                 break;
             default:
                 return new Failure('Invalid type.');
+        }
+    }
+
+    private function discard_product() {
+        $product = new Product($_POST['id']);
+        if(!$product->get_discardtime()) {
+            $product->discard();
+            return new Success('Artikeln skrotad.');
+        } else {
+            return new Failure('Artikeln är redan skrotad.');
         }
     }
 }
