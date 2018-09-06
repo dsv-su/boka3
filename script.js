@@ -330,3 +330,13 @@ function updateUser(event) {
     var form = event.currentTarget
     ajaxRequest('updateuser', dataListFromForm(form), reloadOrError)
 }
+
+function calendar(event) {
+    var input = event.currentTarget
+    if(!input.cal) {
+        var cal = new dhtmlXCalendarObject(input.id)
+        cal.hideTime()
+        input.cal = cal
+        cal.show()
+    }
+}

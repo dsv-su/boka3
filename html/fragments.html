@@ -344,7 +344,9 @@
       <input type="hidden"
              name="product"
              value="¤id¤" />
-      <input class="narrow"
+      <input onClick="JavaScript:calendar(event)"
+             id="¤id¤_date"
+             class="narrow"
              type="text"
              name="end"
              value="¤end_new¤" />
@@ -402,6 +404,8 @@
   <br/>
   <span class="label">Slutdatum:</span>
   <input type="text"
+         id="end"
+         onClick="JavaScript:calendar(event)"
          name="end"
          value="¤end¤" />
 </form>
