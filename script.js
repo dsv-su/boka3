@@ -216,7 +216,17 @@ function addField(event) {
             ['value', '']
         ])
         temp.innerHTML = fragment
-        tr.before(temp.content.firstChild)
+        temp = temp.content.firstChild
+        var temptext = temp.firstChild.innerHTML
+        var current = form.querySelector('#before_info').nextElementSibling
+        var found = false
+        while(!found) {
+            if(current == tr || temptext < current.firstChild.innerHTML) {
+                current.before(temp)
+                found = true
+            }
+            current = current.nextElementSibling
+        }
         nameField.value = ''
     }
     getFragment('info_item', render)
