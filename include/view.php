@@ -298,33 +298,32 @@ abstract class Page extends Responder {
                 $unseen[] = $product;
             }
         }
-        $seen_title = replace(array('title' => 'Inventerade artiklar'),
-                              $this->fragments['subtitle']);
-        $seen_table = 'Inga artiklar inventerade.';
-        $unseen_table = 'Inga artiklar saknas.';
         $missing = 'Saknade artiklar';
         $hidden = 'hidden';
         if($interactive) {
             $missing = 'Kvarvarande artiklar';
             $hidden = '';
         }
-        $unseen_title = replace(array('title' => $missing),
-                                $this->fragments['subtitle']);
+        $out = replace(array('start_date' => $duration['start'],
+                             'total_count' => count($all_products),
+                             'seen_count' => count($seen),
+                             'hide' => $hidden),
+                       $this->fragments['inventory_do']);
+        $out .= replace(array('title' => 'Inventerade artiklar'),
+                        $this->fragments['subtitle']);
         if($seen) {
-            $seen_table = $this->build_product_table($seen);
+            $out .= $this->build_product_table($seen);
+        } else {
+            $out .= 'Inga artiklar inventerade.';
         }
+        $out .= replace(array('title' => $missing),
+                        $this->fragments['subtitle']);
         if($unseen) {
-            $unseen_table = $this->build_product_table($unseen);
+            $out .= $this->build_product_table($unseen);
+        } else {
+            $out .= 'Inga artiklar saknas.';
         }
-        print(replace(array('start_date' => $duration['start'],
-                            'total_count' => count($all_products),
-                            'seen_count' => count($seen),
-                            'seen_title' => $seen_title,
-                            'seen_table' => $seen_table,
-                            'unseen_title' => $unseen_title,
-                            'unseen_table' => $unseen_table,
-                            'hide' => $hidden),
-                      $this->fragments['inventory_do']));
+        return $out;
     }
 }
 
