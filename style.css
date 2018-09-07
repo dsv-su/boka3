@@ -80,6 +80,10 @@ td.overdue {
     background-color: #d95e00;
 }
 
+td.discarded {
+    background-color: #a0a0a0;
+}
+
 tbody tr {
     background-color: #d7e0eb;
 }
