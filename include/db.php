@@ -104,23 +104,79 @@ function get_fields() {
 }
 
 function search_products($term) {
-    $search = prepare("select * from `product` where `name` like ?");
-    bind($search, 's', '%'.$term.'%');
-    execute($search);
     $out = array();
-    foreach(result_list($search) as $row) {
-        $out[] = new Product($row['id']);
+    $matches = array();
+    $terms = array();
+    if(preg_match_all('/[^[:space:]]+:([^[:space:]]+)?/', $term, $matches)) {
+        $fields = get_fields();
+        foreach($matches[0] as $match) {
+            $pair = explode(':', $match);
+            $key = $pair[0];
+            $value = $pair[1];
+            switch($key) {
+                case 'namn':
+                case 'name':
+                    $key = 'name';
+                    break;
+                case 'fakturanummer':
+                case 'invoice':
+                    $key = 'invoice';
+                    break;
+                case 'serienummer':
+                case 'serial':
+                    $key = 'serial';
+                    break;
+                case 'id':
+                    break;
+                default:
+                    if(!in_array($key, $fields) && $key != 'tag') {
+                        continue;
+                    }
+            }
+            $terms[$key] = $value;
+        }
+    }
+    $term = trim(preg_replace('/[^[:space:]]+:([^[:space:]]+)?/',
+                              '',
+                              $term));
+    if($term && !isset($terms['name'])) {
+        $terms['name'] = $term;
+    }
+    foreach(get_items('product') as $product) {
+        if($product->matches($terms)) {
+            $out[] = $product;
+        }
     }
     return $out;
 }
 
 function search_users($term) {
-    $userlist = get_items('user');
     $resultlist = array();
-    foreach($userlist as $user) {
-        $uname = $user->get_name();
-        $dname = strtolower($user->get_displayname());
-        if(strpos($uname, $term) !== false || strpos($dname, $term) !== false) {
+    $matches = array();
+    $terms = array();
+    if(preg_match_all('/[^[:space:]]+:([^[:space:]]+)?/', $term, $matches)) {
+        foreach($matches[0] as $match) {
+            $pair = explode(':', $match);
+            $key = $pair[0];
+            $value = $pair[1];
+            switch($key) {
+                case 'anteckningar':
+                case 'notes':
+                    $key = 'notes';
+                    break;
+                default:
+                    continue;
+            }
+            $terms[$key] = $value;
+        }
+    }
+    $term = trim(preg_replace('/[^[:space:]]+:([^[:space:]]+)?/', '', $term));
+    if($term) {
+        $terms['displayname'] = $term;
+        $terms['name'] = $term;
+    }
+    foreach(get_items('user') as $user) {
+        if($user->matches($terms)) {
             $resultlist[] = $user;
         }
     }
@@ -255,7 +311,30 @@ class Product {
         $this->tags = $newtags;
         return true;
     }
-    
+
+    public function matches($terms) {
+        foreach($terms as $key => $value) {
+            if($key == 'tag') {
+                return in_array($value, $this->tags);
+            }
+            $testfield = '';
+            if(array_key_exists($key, $this->info)) {
+                if(!$value) {
+                    return true;
+                }
+                $testfield = $this->info[$key];
+            } elseif(property_exists($this, $key)) {
+                $testfield = $this->$key;
+            } else {
+                continue;
+            }
+            if($value && strpos(strtolower($testfield), $value) !== false) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public function get_id() {
         return $this->id;
     }
@@ -447,6 +526,23 @@ class User {
         $this->name = $user['name'];
         $this->notes = $user['notes'];
         return true;
+    }
+
+    public function matches($terms) {
+        foreach($terms as $key => $value) {
+            $testfield = '';
+            if($key == 'displayname') {
+                $testfield = $this->get_displayname();
+            } elseif(property_exists($this, $key)) {
+                $testfield = $this->$key;
+            } else {
+                continue;
+            }
+            if(strpos(strtolower($testfield), $value) !== false) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public function get_displayname() {

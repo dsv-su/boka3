@@ -165,20 +165,26 @@ abstract class Page extends Responder {
                                 $this->fragments['item_link']);
             $available = 'Tillgänglig';
             $status = 'available';
-            $loan = $product->get_active_loan();
-            if($loan) {
-                $user = $loan->get_user();
-                $userlink = replace(array('name' => $user->get_displayname(),
-                                          'id' => $user->get_id(),
-                                          'page' => 'users'),
-                                    $this->fragments['item_link']);
-                $available = 'Utlånad till '.$userlink;
-                if($loan->is_overdue()) {
-                    $status = 'overdue';
-                    $available .= ', försenad';
-                } else {
-                    $status = 'on_loan';
-                    $available .= ', åter '.$loan->get_duration()['end'];
+            $discarded = $product->get_discardtime();
+            if($discarded) {
+                $available = 'Skrotad '.$discarded;
+                $status = 'discarded';
+            } else {
+                $loan = $product->get_active_loan();
+                if($loan) {
+                    $user = $loan->get_user();
+                    $userlink = replace(array('name' => $user->get_displayname(),
+                                              'id' => $user->get_id(),
+                                              'page' => 'users'),
+                                        $this->fragments['item_link']);
+                    $available = 'Utlånad till '.$userlink;
+                    if($loan->is_overdue()) {
+                        $status = 'overdue';
+                        $available .= ', försenad';
+                    } else {
+                        $status = 'on_loan';
+                        $available .= ', åter '.$loan->get_duration()['end'];
+                    }
                 }
             }
             $rows .= replace(array('available' => $available,
@@ -334,11 +340,12 @@ class SearchPage extends Page {
         parent::__construct();
         $this->subtitle = 'Sökresultat för ';
         if(isset($_GET['q'])) {
-            $this->query = $_GET['q'];
-            $this->subtitle .= "'$this->query'";
+            $query = $_GET['q'];
+            $this->query = strtolower($query);
+            $this->subtitle .= "'$query'";
         }
     }
-
+    
     private function do_search() {
         $out = array('users' => array(),
                      'products' => array());
@@ -368,6 +375,9 @@ class SearchPage extends Page {
         if($nohits) {
             print('Inga träffar.');
         }
+        print(replace(array('title' => 'Hjälp'),
+                      $this->fragments['subtitle']));
+        print($this->fragments['search_help']);
     }
 }
 
@@ -431,8 +441,10 @@ class ProductPage extends Page {
                              'tags' => $tags,
                              'info' => $info),
                        $this->fragments['product_details']);
-        $out .= replace(array('id' => $this->product->get_id()),
-                        $this->fragments['discard_button']);
+        if(!$this->product->get_discardtime()) {
+            $out .= replace(array('id' => $this->product->get_id()),
+                            $this->fragments['discard_button']);
+        }
         $out .= replace(array('title' => 'Lånehistorik'),
                         $this->fragments['subtitle']);
         $loan_table = 'Inga lån att visa.';
@@ -609,11 +621,16 @@ class HistoryPage extends Page {
         switch($this->action) {
             case 'list':
                 print($this->build_inventory_table());
+                print(replace(array('title' => 'Skrotade artiklar'),
+                              $this->fragments['title']));
+                print($this->build_product_table(
+                    get_items('product_discarded')));
                 break;
             case 'show':
                 if($this->inventory &&
                     Inventory::get_active() !== $this->inventory) {
-                    print($this->build_inventory_details($this->inventory, false));
+                    print($this->build_inventory_details($this->inventory,
+                                                         false));
                 }
                 break;
         }
@@ -860,8 +877,11 @@ class Ajax extends Responder {
             }
         }
         $product = new Product($id);
+        if($product->get_discardtime()) {
+            return new Failure('Skrotade artiklar får inte modifieras.');
+        }
         if(!$name) {
-            return new Failure('Produkten måste ha ett namn.');
+            return new Failure('Artikeln måste ha ett namn.');
         }
         if($name != $product->get_name()) {
             $product->set_name($name);
@@ -943,6 +963,10 @@ class Ajax extends Responder {
     private function discard_product() {
         $product = new Product($_POST['id']);
         if(!$product->get_discardtime()) {
+            if($product->get_active_loan()) {
+                return new Failure('Artikeln har ett aktivt lån.<br/>'
+                                  .'Lånet måste avslutas innan artikeln skrotas.');
+            }
             $product->discard();
             return new Success('Artikeln skrotad.');
         } else {
