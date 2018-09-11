@@ -534,19 +534,53 @@
 
 ¤¤ search_help ¤¤
 <p>
-  Du kan söka på specifika fält:
+  Sökfunktionen matchar normalt på låntagares namn och användarnamn,
+  samt artiklars namn. Alla ord måste matcha för att generera en
+  träff. Flera sökningar kan kombineras mha nyckelordet 'or'.
 </p>
+<p>
+  Övriga fält är sökbara med syntaxen [fält]:[värde]. Saknas [värde]
+  så returneras alla träffar som överhuvud taget har fältet.
+</p>
+<p>
+  Fritextsökning matchar delar av ord, medan [fält]:[värde]-syntaxen
+  bara matchar hela ord.
+</p>
+<p>
+  De fält som alltid finns är:
+  <ul>
+    <li>
+      <strong>Artikel:</strong> id, namn, serienummer, fakturanummer
+    </li>
+    <li>
+      <strong>Låntagare:</strong> id, namn, användarnamn, anteckningar
+    </li>
+  </ul>
+  Artiklar kan ha fler fält beroende på vad som lagts till.
+</p>
+<h3>Lite exempel:</h3>
 <ul>
   <li>
-    <b>"tag:trasig"</b>
-    - sök efter produkter med taggen "trasig"
+    <strong>"mac"</strong>
+    - sök efter artiklar och användare vars namn eller användarnamn
+    innehåller strängen 'mac'
   </li>
   <li>
-    <b>"serienummer:abcd123"</b>
-    - sök efter produkter vars serienummer innehåller "abcd123"
+    <strong>"tag:trasig"</strong>
+    - sök efter artiklar med taggen "trasig"<br/>
+    (Det är bara artiklar som kan ha taggar)
   </li>
   <li>
-    <b>"anteckning:"</b>
-    - sök efter produkter som har ett fält vid namn "anteckning"
+    <strong>"anteckning:"</strong>
+    - sök efter artiklar som har ett fält vid namn "anteckning"<br/>
+    (Anteckningsfältet för användare heter 'anteckningar', så bara
+    artiklar kommer hittas)
+  </li>
+  <li>
+    <strong>"mac or tag:trasig"</strong>
+    - sök efter artiklar och användare som matchar "mac", samt
+    artiklar som har taggen "trasig"<br/>
+    (Bara artiklar kan ha taggar, men eftersom 'mac' är fritext så
+    kan den matcha både artiklar och låntagare)
   </li>
 </ul>
