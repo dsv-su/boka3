@@ -931,6 +931,11 @@ class Ajax extends Responder {
         $serial = $info['serial'];
         $invoice = $info['invoice'];
         $tags = explode(',', strtolower($info['tags']));
+        foreach($tags as $tag) {
+            if(strpos($tag, ' ') !== false || strpos($tag, ',') !== false) {
+                return new Failure("Taggar får inte innehålla mellanslag eller kommatecken.");
+            }
+        }
         foreach(array('id', 'name', 'serial', 'invoice', 'tags') as $key) {
             unset($info[$key]);
         }
