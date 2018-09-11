@@ -218,8 +218,8 @@ class Product {
                     }
                     break;
                 case 'status':
+                    $loan = $this->get_active_loan();
                     foreach($values as $value) {
-                        $loan = $this->get_active_loan();
                         switch($value) {
                             case 'on_loan':
                                 if(!$loan) {
@@ -232,7 +232,7 @@ class Product {
                                 }
                                 break;
                             case 'overdue':
-                                if(!$loan->is_overdue()) {
+                                if(!$loan || !$loan->is_overdue()) {
                                     return false;
                                 }
                                 break;
@@ -240,6 +240,7 @@ class Product {
                                 return false;
                         }
                     }
+                    break;
                 case 'words':
                     $testfield = $this->name;
                     break;
@@ -255,7 +256,8 @@ class Product {
             }
             if($testfield !== null) {
                 foreach($values as $value) {
-                    if($testfield != $value) {
+                    $test = strtolower($testfield);
+                    if(strpos($test, $value) === false) {
                         return false;
                     }
                 }
@@ -465,7 +467,7 @@ class User {
                         if(strpos($this->name, $value) !== false) {
                             continue;
                         }
-                        $name = $this->get_displayname();
+                        $name = strtolower($this->get_displayname());
                         if(strpos($name, $value) !== false) {
                             continue;
                         }
