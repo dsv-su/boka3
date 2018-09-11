@@ -334,26 +334,97 @@ abstract class Page extends Responder {
 }
 
 class SearchPage extends Page {
-    private $query = '';
+    private $querystr = '';
+    private $terms = array();
     
     public function __construct() {
         parent::__construct();
         $this->subtitle = 'Sökresultat för ';
         if(isset($_GET['q'])) {
-            $query = $_GET['q'];
-            $this->query = strtolower($query);
-            $this->subtitle .= "'$query'";
+            $this->querystr = $_GET['q'];
+            $this->subtitle .= "'$this->querystr'";
+            $orterms = preg_split('/[[:space:]]+or[[:space:]]+/',
+                                  strtolower($this->querystr),
+                                  -1,
+                                  PREG_SPLIT_NO_EMPTY);
+            foreach($orterms as $orterm) {
+                $searchpart = array();
+                $terms = preg_split('/[[:space:]]+/',
+                                    $orterm,
+                                    -1,
+                                    PREG_SPLIT_NO_EMPTY);
+                foreach($terms as $term) {
+                    $key = '';
+                    $value = '';
+                    if(strpos($term, ':') !== false) {
+                        $pair = explode(':', $term);
+                        $key = $pair[0];
+                        switch($key) {
+                            case 'namn':
+                                $key = 'name';
+                                break;
+                            case 'fakturanummer':
+                                $key = 'invoice';
+                                break;
+                            case 'serienummer':
+                                $key = 'serial';
+                                break;
+                            case 'anteckningar':
+                                $key = 'notes';
+                                break;
+                        }
+                        $value = $pair[1];
+                        if($key == 'status') {
+                            switch($value) {
+                                case 'inne':
+                                    $value = 'no_loan';
+                                    break;
+                                case 'ute':
+                                case 'utlånad':
+                                    $value = 'on_loan';
+                                    break;
+                                case 'sen':
+                                case 'försenad':
+                                case 'försenat':
+                                    $value = 'overdue';
+                                    break;
+                            }
+                        }
+                    } else {
+                        $key = 'words';
+                        $value = $term;
+                    }
+                    if(!isset($searchpart[$key])) {
+                        $searchpart[$key] = array();
+                    }
+                    $searchpart[$key][] = $value;
+                }
+                $this->terms[] = $searchpart;
+            }
         }
     }
     
     private function do_search() {
         $out = array('users' => array(),
                      'products' => array());
-        if(!$this->query) {
+        if(!$this->querystr) {
             return $out;
         }
-        $out['users'] = search_users($this->query);
-        $out['products'] = search_products($this->query);
+        $out['users'] = $this->search('user');
+        $out['products'] = $this->search('product');
+        return $out;
+    }
+
+    private function search($type) {
+        $items = get_items($type);
+        $out = array();
+        foreach($items as $item) {
+            foreach($this->terms as $term) {
+                if($item->matches($term)) {
+                    $out[] = $item;
+                }
+            }
+        }
         return $out;
     }
     
@@ -623,8 +694,12 @@ class HistoryPage extends Page {
                 print($this->build_inventory_table());
                 print(replace(array('title' => 'Skrotade artiklar'),
                               $this->fragments['title']));
-                print($this->build_product_table(
-                    get_items('product_discarded')));
+                $discards = get_items('product_discarded');
+                if($discards) {
+                    print($this->build_product_table($discards));
+                } else {
+                    print('Inga artiklar skrotade.');
+                }
                 break;
             case 'show':
                 if($this->inventory &&
@@ -887,7 +962,7 @@ class Ajax extends Responder {
             $product->set_name($name);
         }
         if(!$serial) {
-            return new Failure('Produkten måste ha ett serienummer.');
+            return new Failure('Artikeln måste ha ett serienummer.');
         }
         if($serial != $product->get_serial()) {
             try {
@@ -897,7 +972,7 @@ class Ajax extends Responder {
             }
         }
         if(!$invoice) {
-            return new Failure('Produkten måste ha ett fakturanummer.');
+            return new Failure('Artikeln måste ha ett fakturanummer.');
         }
         if($invoice != $product->get_invoice()) {
             $product->set_invoice($invoice);

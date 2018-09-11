@@ -103,112 +103,6 @@ function get_fields() {
     return $out;
 }
 
-function search_products($term) {
-    $out = array();
-    $matches = array();
-    $terms = array();
-    if(preg_match_all('/[^[:space:]]+:([^[:space:]]+)?/', $term, $matches)) {
-        $fields = get_fields();
-        foreach($matches[0] as $match) {
-            $pair = explode(':', $match);
-            $key = $pair[0];
-            $value = $pair[1];
-            switch($key) {
-                case 'namn':
-                case 'name':
-                    $key = 'name';
-                    break;
-                case 'fakturanummer':
-                case 'invoice':
-                    $key = 'invoice';
-                    break;
-                case 'serienummer':
-                case 'serial':
-                    $key = 'serial';
-                    break;
-                case 'id':
-                    break;
-                default:
-                    if(!in_array($key, $fields) && $key != 'tag') {
-                        continue;
-                    }
-            }
-            $terms[$key] = $value;
-        }
-    }
-    $term = trim(preg_replace('/[^[:space:]]+:([^[:space:]]+)?/',
-                              '',
-                              $term));
-    if($term && !isset($terms['name'])) {
-        $terms['name'] = $term;
-    }
-    foreach(get_items('product') as $product) {
-        if($product->matches($terms)) {
-            $out[] = $product;
-        }
-    }
-    return $out;
-}
-
-function search_users($term) {
-    $resultlist = array();
-    $matches = array();
-    $terms = array();
-    if(preg_match_all('/[^[:space:]]+:([^[:space:]]+)?/', $term, $matches)) {
-        foreach($matches[0] as $match) {
-            $pair = explode(':', $match);
-            $key = $pair[0];
-            $value = $pair[1];
-            switch($key) {
-                case 'anteckningar':
-                case 'notes':
-                    $key = 'notes';
-                    break;
-                default:
-                    continue;
-            }
-            $terms[$key] = $value;
-        }
-    }
-    $term = trim(preg_replace('/[^[:space:]]+:([^[:space:]]+)?/', '', $term));
-    if($term) {
-        $terms['displayname'] = $term;
-        $terms['name'] = $term;
-    }
-    foreach(get_items('user') as $user) {
-        if($user->matches($terms)) {
-            $resultlist[] = $user;
-        }
-    }
-    return $resultlist;
-}
-
-function search_loans($products) {
-    $search = 'select * from `loan` where ';
-    $iter = 0;
-    $terms = array();
-    $tc = '';
-    foreach($products as $product) {
-        if($iter != 0) {
-            $search .= 'or ';
-        }
-        $search .= '`product` = ?';
-        $terms[] = $product->get_id();
-        $tc .= 'i';
-        $iter++;
-    }
-    $out = array();
-    if($tc) {
-        $search = prepare($search);
-        bind($search, $tc, ...$terms);
-        execute($search);
-        foreach(result_list($search) as $loan) {
-            $out[] = new Loan($loan['id']);
-        }
-    }
-    return $out;
-}
-
 class Product {
     private $id = 0;
     private $name = '';
@@ -313,26 +207,61 @@ class Product {
     }
 
     public function matches($terms) {
-        foreach($terms as $key => $value) {
-            if($key == 'tag') {
-                return in_array($value, $this->tags);
+        foreach($terms as $fieldtype => $values) {
+            $testfield = null;
+            switch($fieldtype) {
+                case 'tag':
+                    foreach($values as $value) {
+                        if(!in_array($value, $this->tags)) {
+                            return false;
+                        }
+                    }
+                    break;
+                case 'status':
+                    foreach($values as $value) {
+                        $loan = $this->get_active_loan();
+                        switch($value) {
+                            case 'on_loan':
+                                if(!$loan) {
+                                    return false;
+                                }
+                                break;
+                            case 'no_loan':
+                                if($loan) {
+                                    return false;
+                                }
+                                break;
+                            case 'overdue':
+                                if(!$loan->is_overdue()) {
+                                    return false;
+                                }
+                                break;
+                            default:
+                                return false;
+                        }
+                    }
+                case 'words':
+                    $testfield = $this->name;
+                    break;
+                default:
+                    if(property_exists($this, $fieldtype)) {
+                        $testfield = $this->$fieldtype;
+                    } elseif(array_key_exists($fieldtype, $this->info)) {
+                        $tesfield = $this->info[$fieldtype];
+                    } else {
+                        return false;
+                    }
+                    break;
             }
-            $testfield = '';
-            if(array_key_exists($key, $this->info)) {
-                if(!$value) {
-                    return true;
+            if($testfield !== null) {
+                foreach($values as $value) {
+                    if($testfield != $value) {
+                        return false;
+                    }
                 }
-                $testfield = $this->info[$key];
-            } elseif(property_exists($this, $key)) {
-                $testfield = $this->$key;
-            } else {
-                continue;
-            }
-            if($value && strpos(strtolower($testfield), $value) !== false) {
-                return true;
             }
         }
-        return false;
+        return true;
     }
 
     public function get_id() {
@@ -529,22 +458,35 @@ class User {
     }
 
     public function matches($terms) {
-        foreach($terms as $key => $value) {
-            $testfield = '';
-            if($key == 'displayname') {
-                $testfield = $this->get_displayname();
-            } elseif(property_exists($this, $key)) {
-                $testfield = $this->$key;
-            } else {
-                continue;
-            }
-            if(strpos(strtolower($testfield), $value) !== false) {
-                return true;
+        foreach($terms as $fieldtype => $values) {
+            switch($fieldtype) {
+                case 'words':
+                    foreach($values as $value) {
+                        if(strpos($this->name, $value) !== false) {
+                            continue;
+                        }
+                        $name = $this->get_displayname();
+                        if(strpos($name, $value) !== false) {
+                            continue;
+                        }
+                        return false;
+                    }
+                    break;
+                default:
+                    if(!property_exists($this, $fieldtype)) {
+                        return false;
+                    }
+                    foreach($values as $value) {
+                        if($this->$fieldtype != $value) {
+                            return false;
+                        }
+                    }
+                    break;
             }
         }
-        return false;
+        return true;
     }
-
+    
     public function get_displayname() {
         global $ldap;
         try {
