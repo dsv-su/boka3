@@ -284,7 +284,7 @@ function removeTag(event) {
 
 function saveProduct(event) {
     event.preventDefault()
-    var action = event.explicitOriginalTarget.id
+    var action = document.activeElement.id
     if(action == 'reset') {
         return window.location.reload(true)
     }
@@ -333,7 +333,7 @@ function saveProduct(event) {
 
 function updateUser(event) {
     event.preventDefault()
-    var action = event.explicitOriginalTarget.id
+    var action = document.activeElement.id
     if(action == 'reset') {
         return window.location.reload(true)
     }
