@@ -244,9 +244,9 @@ function addTag(event) {
         return showResult({'type': 'error',
                            'message': 'Taggen måste ha ett namn.'})
     }
-    if(tagname.indexOf(',') > -1) {
+    if(tagname.indexOf(',') > -1 || tagname.indexOf(' ') > -1) {
         return showResult({'type': 'error',
-                           'message': 'Taggar får inte innehålla kommatecken.'})
+                           'message': 'Taggar får inte innehålla mellanslag eller kommatecken.'})
     }
     tagname = tagname.charAt(0).toUpperCase() + tagname.slice(1)
     var tagElements = tr.querySelectorAll('.tag')
