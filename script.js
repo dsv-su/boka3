@@ -110,7 +110,7 @@ function checkoutProduct(event) {
     var product = form.product.value
     if(!user) {
         showResult({'type':'error',
-                    'message':'Ingen användare vald.'})
+                    'message':'Ingen låntagare vald.'})
         return
     }
     ajaxRequest('checkout', dataListFromForm(form), reloadOrError)

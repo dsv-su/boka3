@@ -543,14 +543,14 @@
   så returneras alla träffar som överhuvud taget har fältet.
 </p>
 <p>
-  Fritextsökning matchar delar av ord, medan [fält]:[värde]-syntaxen
-  bara matchar hela ord.
+  Alla sökningar matchar på delar av ord, utom taggar som bara matchas exakt.
 </p>
 <p>
   De fält som alltid finns är:
   <ul>
     <li>
-      <strong>Artikel:</strong> id, namn, serienummer, fakturanummer
+      <strong>Artikel:</strong> id, namn, serienummer, fakturanummer, status<br/>
+      Giltiga värden för status är: inne, ute, utlånad, sen, försenad
     </li>
     <li>
       <strong>Låntagare:</strong> id, namn, användarnamn, anteckningar
@@ -562,7 +562,7 @@
 <ul>
   <li>
     <strong>"mac"</strong>
-    - sök efter artiklar och användare vars namn eller användarnamn
+    - sök efter artiklar och låntagare vars namn eller användarnamn
     innehåller strängen 'mac'
   </li>
   <li>
@@ -573,12 +573,12 @@
   <li>
     <strong>"anteckning:"</strong>
     - sök efter artiklar som har ett fält vid namn "anteckning"<br/>
-    (Anteckningsfältet för användare heter 'anteckningar', så bara
+    (Anteckningsfältet för låntagare heter 'anteckningar', så bara
     artiklar kommer hittas)
   </li>
   <li>
     <strong>"mac or tag:trasig"</strong>
-    - sök efter artiklar och användare som matchar "mac", samt
+    - sök efter artiklar och låntagare som matchar "mac", samt
     artiklar som har taggen "trasig"<br/>
     (Bara artiklar kan ha taggar, men eftersom 'mac' är fritext så
     kan den matcha både artiklar och låntagare)
