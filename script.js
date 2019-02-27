@@ -100,7 +100,12 @@ function replace(fragment, replacements) {
 function returnProduct(event) {
     event.preventDefault()
     var form = event.currentTarget
-    ajaxRequest('return', dataListFromForm(form), showResult)
+    var handleResult = function(result) {
+        showResult(result)
+        form.serial.value = ''
+        form.serial.select()
+    }
+    ajaxRequest('return', dataListFromForm(form), handleResult)
 }
 
 function checkoutProduct(event) {
