@@ -939,6 +939,19 @@ class Ajax extends Responder {
         foreach(array('id', 'name', 'serial', 'invoice', 'tags') as $key) {
             unset($info[$key]);
         }
+        if(!$name) {
+            return new Failure('Artikeln måste ha ett namn.');
+        }
+        if(!$serial) {
+            return new Failure('Artikeln måste ha ett serienummer.');
+        }
+        try {
+            $temp = new Product($serial, 'serial');
+            return new Failure('Det angivna serienumret finns redan på en annan artikel.');
+        } catch(Exception $e) {}
+        if(!$invoice) {
+            return new Failure('Artikeln måste ha ett fakturanummer.');
+        }
         $product = null;
         if(!$id) {
             try {
@@ -960,24 +973,15 @@ class Ajax extends Responder {
         if($product->get_discardtime()) {
             return new Failure('Skrotade artiklar får inte modifieras.');
         }
-        if(!$name) {
-            return new Failure('Artikeln måste ha ett namn.');
-        }
         if($name != $product->get_name()) {
             $product->set_name($name);
-        }
-        if(!$serial) {
-            return new Failure('Artikeln måste ha ett serienummer.');
         }
         if($serial != $product->get_serial()) {
             try {
                 $product->set_serial($serial);
             } catch(Exception $e) {
-                return new Failure('Det angivna serienumret finns redan på en annan artikel.');
+                return new Failure("Serienumret upptaget. Det här meddelandet ska aldrig visas.");
             }
-        }
-        if(!$invoice) {
-            return new Failure('Artikeln måste ha ett fakturanummer.');
         }
         if($invoice != $product->get_invoice()) {
             $product->set_invoice($invoice);
