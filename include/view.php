@@ -945,15 +945,15 @@ class Ajax extends Responder {
         if(!$serial) {
             return new Failure('Artikeln måste ha ett serienummer.');
         }
-        try {
-            $temp = new Product($serial, 'serial');
-            return new Failure('Det angivna serienumret finns redan på en annan artikel.');
-        } catch(Exception $e) {}
         if(!$invoice) {
             return new Failure('Artikeln måste ha ett fakturanummer.');
         }
         $product = null;
         if(!$id) {
+            try {
+                $temp = new Product($serial, 'serial');
+                return new Failure('Det angivna serienumret finns redan på en annan artikel.');
+            } catch(Exception $e) {}
             try {
                 $product = Product::create_product($name,
                                                    $invoice,
@@ -980,7 +980,7 @@ class Ajax extends Responder {
             try {
                 $product->set_serial($serial);
             } catch(Exception $e) {
-                return new Failure("Serienumret upptaget. Det här meddelandet ska aldrig visas.");
+                return new Failure('Det angivna serienumret finns redan på en annan artikel.');
             }
         }
         if($invoice != $product->get_invoice()) {

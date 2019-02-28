@@ -127,19 +127,15 @@ class Product {
             $ins_prod = prepare($stmt);
             bind($ins_prod, 'sssi', $name, $invoice, $serial, $now);
             execute($ins_prod);
-            $prodid = $ins_prod->insert_id;
-            $ins_info = prepare('insert into `product_info`(`product`, `field`, `data`) values (?, ?, ?)');
-            foreach($info as $key => $value) {
-                bind($ins_info, 'iss', $prodid, $key, $value);
-                execute($ins_info);
+            $product = new Product($serial, 'serial');
+            foreach($info as $field => $value) {
+                $product->set_info($field, $value);
             }
-            $ins_tag = prepare('insert into `product_tag`(`product`, `tag`) values (?, ?)');
             foreach($tags as $tag) {
-                bind($ins_tag, 'is', $prodid, $tag);
-                execute($ins_tag);
+                $product->add_tag($tag);
             }
             commit_trans();
-            return new Product($prodid);
+            return $product;
         } catch(Exception $e) {
             revert_trans();
             throw $e;
@@ -364,6 +360,9 @@ class Product {
     }
     
     public function add_tag($tag) {
+        if(!$tag) {
+            return true;
+        }
         $find = prepare('select * from `product_tag` where `product`=? and `tag`=?');
         bind($find, 'is', $this->id, $tag);
         execute($find);
@@ -498,6 +497,15 @@ class User {
         }
     }
 
+    public function get_email() {
+        global $ldap;
+        try {
+            return $ldap->get_user_email($this->name);
+        } catch(Exception $e) {
+            return 'Mailadress saknas';
+        }
+    }
+
     public function get_id() {
         return $this->id;
     }
@@ -551,6 +559,16 @@ class User {
             $loans[] = new Loan($row['id']);
         }
         return $loans;
+    }
+
+    public function get_overdue_loans() {
+        $overdue = array();
+        foreach($this->get_loans('active') as $loan) {
+            if($loan->is_overdue()) {
+                $overdue[] = $loan;
+            }
+        }
+        return $overdue;
     }
     
     public function create_loan($product, $endtime) {
@@ -812,7 +830,10 @@ class Kvs {
     }
     
     public function get_value($key) {
-        return $this->items[$key];
+        if(isset($this->items[$key])) {
+            return $this->items[$key];
+        }
+        return null;
     }
     
     public function set_key($key, $value) {
