@@ -174,6 +174,8 @@ function suggest(input, type) {
             existing.push(tag.toLowerCase())
         }
         break
+    case 'template':
+        break
     }
     var render = function(result) {
         var suggestlist = document.querySelector('#' + type + 'list')
@@ -285,6 +287,14 @@ function removeTag(event) {
     var tag = event.currentTarget
     var parent = tag.parentNode
     parent.remove(tag)
+}
+
+function showSiblings(event) {
+    event.preventDefault()
+    var siblings = event.currentTarget.parentNode.children
+    for (var i = 0; i < siblings.length; i++) {
+        siblings[i].classList.toggle('hidden')
+    }
 }
 
 function saveProduct(event) {
