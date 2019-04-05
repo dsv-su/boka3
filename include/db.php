@@ -84,7 +84,12 @@ function get_items($type) {
 }
 
 function get_tags() {
-    $search = prepare('select distinct `tag` from `product_tag` order by `tag`');
+    $search = prepare(
+        '(select `tag` from `product_tag`)
+         union
+         (select `tag` from `template_tag`)
+         order by `tag`'
+    );
     execute($search);
     $out = array();
     foreach(result_list($search) as $row) {
@@ -94,11 +99,26 @@ function get_tags() {
 }
 
 function get_fields() {
-    $search = prepare('select distinct `field` from `product_info` order by `field`');
+    $search = prepare(
+        '(select `field` from `product_info`)
+         union
+         (select `field` from `template_info`)
+         order by `field`'
+    );
     execute($search);
     $out = array();
     foreach(result_list($search) as $row) {
         $out[] = $row['field'];
+    }
+    return $out;
+}
+
+function get_templates() {
+    $search = prepare('select `name` from `template` order by `name`');
+    execute($search);
+    $out = array();
+    foreach(result_list($search) as $row) {
+        $out[] = $row['name'];
     }
     return $out;
 }
@@ -123,7 +143,9 @@ class Product {
         $now = time();
         begin_trans();
         try {
-            $stmt = 'insert into `product`(`name`, `invoice`, `serial`, `createtime`) values (?, ?, ?, ?)';
+            $stmt = 'insert into
+                         `product`(`name`, `invoice`, `serial`, `createtime`)
+                         values (?, ?, ?, ?)';
             $ins_prod = prepare($stmt);
             bind($ins_prod, 'sssi', $name, $invoice, $serial, $now);
             execute($ins_prod);
@@ -148,7 +170,8 @@ class Product {
                 $this->id = $clue;
                 break;
             case 'serial':
-                $search = prepare('select `id` from `product` where `serial`=?');
+                $search = prepare('select `id` from `product`
+                                   where `serial`=?');
                 bind($search, 's', $clue);
                 execute($search);
                 $result = result_single($search);
@@ -179,7 +202,8 @@ class Product {
     }
     
     private function update_info() {
-        $get = prepare('select * from `product_info` where `product`=? order by `field`');
+        $get = prepare('select * from `product_info`
+                        where `product`=? order by `field`');
         bind($get, 'i', $this->id);
         execute($get);
         foreach(result_list($get) as $row) {
@@ -191,7 +215,8 @@ class Product {
     }
     
     private function update_tags() {
-        $get = prepare('select * from `product_tag` where `product`=? order by `tag`');
+        $get = prepare('select * from `product_tag`
+                        where `product`=? order by `tag`');
         bind($get, 'i', $this->id);
         execute($get);
         $newtags = array();
@@ -327,13 +352,20 @@ class Product {
     }
     
     public function set_info($field, $value) {
-        $find = prepare('select * from `product_info` where `product`=? and `field`=?');
+        if(!$value) {
+            return true;
+        }
+        $find = prepare('select * from `product_info`
+                         where `product`=? and `field`=?');
         bind($find, 'is', $this->id, $field);
         execute($find);
         if(result_single($find) === null) {
-            $update = prepare('insert into `product_info`(`data`, `product`, `field`) values (?, ?, ?)');
+            $update = prepare('insert into
+                                   `product_info`(`data`, `product`, `field`)
+                                   values (?, ?, ?)');
         } else {
-            $update = prepare('update `product_info` set `data`=? where `product`=? and `field`=?');
+            $update = prepare('update `product_info` set `data`=?
+                               where `product`=? and `field`=?');
         }
         bind($update, 'sis', $value, $this->id, $field);
         execute($update);
@@ -342,13 +374,15 @@ class Product {
     }
     
     public function remove_info($field) {
-        $find = prepare('select * from `product_info` where `product`=? and `field`=?');
+        $find = prepare('select * from `product_info`
+                         where `product`=? and `field`=?');
         bind($find, 'is', $this->id, $field);
         execute($find);
         if(result_single($find) === null) {
             return true;
         }
-        $update = prepare('delete from `product_info` where `field`=? and `product`=?');
+        $update = prepare('delete from `product_info`
+                           where `field`=? and `product`=?');
         bind($update, 'si', $field, $this->id);
         execute($update);
         $this->update_info();
@@ -363,28 +397,30 @@ class Product {
         if(!$tag) {
             return true;
         }
-        $find = prepare('select * from `product_tag` where `product`=? and `tag`=?');
+        $find = prepare('select * from `product_tag`
+                         where `product`=? and `tag`=?');
         bind($find, 'is', $this->id, $tag);
         execute($find);
         if(result_single($find) === null) {
-            $update = prepare('insert into `product_tag`(`tag`, `product`) values (?, ?)');
-        } else {
-            $update = prepare('update `product_tag` set `tag`=? where `product`=?');
+            $update = prepare('insert into `product_tag`(`tag`, `product`)
+                                   values (?, ?)');
+            bind($update, 'si', $tag, $this->id);
+            execute($update);
+            $this->update_tags();
         }
-        bind($update, 'si', $tag, $this->id);
-        execute($update);
-        $this->update_tags();
         return true;
     }
     
     public function remove_tag($tag) {
-        $find = prepare('select * from `product_tag` where `product`=? and `tag`=?');
+        $find = prepare('select * from `product_tag`
+                         where `product`=? and `tag`=?');
         bind($find, 'is', $this->id, $tag);
         execute($find);
         if(result_single($find) === null) {
             return true;
         }
-        $update = prepare('delete from `product_tag` where `tag`=? and `product`=?');
+        $update = prepare('delete from `product_tag`
+                           where `tag`=? and `product`=?');
         bind($update, 'si', $tag, $this->id);
         execute($update);
         $this->update_tags();
@@ -392,7 +428,8 @@ class Product {
     }
 
     public function get_active_loan() {
-        $find = prepare('select `id` from `loan` where `returntime` is null and product=?');
+        $find = prepare('select `id` from `loan`
+                         where `returntime` is null and product=?');
         bind($find, 'i', $this->id);
         execute($find);
         $result = result_single($find);
@@ -403,7 +440,8 @@ class Product {
     }
 
     public function get_loan_history() {
-        $find = prepare('select `id` from `loan` where product=? order by `starttime` desc');
+        $find = prepare('select `id` from `loan`
+                         where product=? order by `starttime` desc');
         bind($find, 'i', $this->id);
         execute($find);
         $loans = result_list($find);
@@ -412,6 +450,183 @@ class Product {
             $out[] = new Loan($loan['id']);
         }
         return $out;
+    }
+}
+
+class Template {
+    private $id = 0;
+    private $name = '';
+    private $fields = array();
+    private $tags = array();
+    
+    public static function create_template(
+        $name = '',
+        $fields = array(),
+        $tags = array()
+    ) {
+        begin_trans();
+        try {
+            $stmt = 'insert into `template`(`name`) values (?)';
+            $ins_prod = prepare($stmt);
+            bind($ins_prod, 's', $name);
+            execute($ins_prod);
+            $template = new Template($name, 'name');
+            foreach($fields as $field) {
+                $template->add_field($field);
+            }
+            foreach($tags as $tag) {
+                $template->add_tag($tag);
+            }
+            commit_trans();
+            return $template;
+        } catch(Exception $e) {
+            revert_trans();
+            throw $e;
+        }
+    }
+    
+    public function __construct($clue, $type = 'id') {
+        switch($type) {
+            case 'id':
+                $this->id = $clue;
+                $search = prepare('select `name` from `template`
+                                   where `id`=?');
+                bind($search, 'i', $this->id);
+                execute($search);
+                $result = result_single($search);
+                if($result === null) {
+                    throw new Exception('Invalid id');
+                }
+                $this->name = $result['name'];
+                break;
+            case 'name':
+                $this->name = $clue;
+                $search = prepare('select `id` from `template`
+                                   where `name`=?');
+                bind($search, 's', $this->name);
+                execute($search);
+                $result = result_single($search);
+                if($result === null) {
+                    throw new Exception('Invalid name.');
+                }
+                $this->id = $result['id'];
+                break;
+            default:
+                throw new Exception('Invalid type.');
+        }
+        $this->update_fields();
+        $this->update_tags();
+    }
+    
+    public function get_name() {
+        return $this->name;
+    }
+
+    public function set_name($name) {
+        $update = prepare('update `template` set `name`=? where `id`=?');
+        bind($update, 'si', $name, $this->id);
+        execute($update);
+        $this->name = $name;
+        return true;
+    }
+    
+    private function update_fields() {
+        $get = prepare('select `field` from `template_info`
+                        where `template`=? order by `field`');
+        bind($get, 'i', $this->id);
+        execute($get);
+        $fields = array();
+        foreach(result_list($get) as $row) {
+            $fields[] = $row['field'];
+        }
+        $this->fields = $fields;
+        return true;
+    }
+    
+    private function update_tags() {
+        $get = prepare('select * from `template_tag`
+                        where `template`=? order by `tag`');
+        bind($get, 'i', $this->id);
+        execute($get);
+        $newtags = array();
+        foreach(result_list($get) as $row) {
+            $newtags[] = $row['tag'];
+        }
+        $this->tags = $newtags;
+        return true;
+    }
+
+    public function get_fields() {
+        return $this->fields;
+    }
+
+    public function add_field($field) {
+        $find = prepare('select * from `template_info`
+                         where `template`=? and `field`=?');
+        bind($find, 'is', $this->id, $field);
+        execute($find);
+        if(result_single($find) === null) {
+            $update = prepare('insert into `template_info`(`template`, `field`)
+                                   values (?, ?)');
+            bind($update, 'is', $this->id, $field);
+            execute($update);
+            $this->update_fields();
+        }
+        return true;
+    }
+    
+    public function remove_field($field) {
+        $find = prepare('select * from `template_info`
+                         where `template`=? and `field`=?');
+        bind($find, 'is', $this->id, $field);
+        execute($find);
+        if(result_single($find) === null) {
+            return true;
+        }
+        $update = prepare('delete from `template_info`
+                           where `field`=? and `template`=?');
+        bind($update, 'si', $field, $this->id);
+        execute($update);
+        $this->update_fields();
+        return true;
+    }
+
+    public function get_tags() {
+        return $this->tags;
+    }
+
+    public function add_tag($tag) {
+        if(!$tag) {
+            return true;
+        }
+        $find = prepare('select * from `template_tag`
+                         where `template`=? and `tag`=?');
+        bind($find, 'is', $this->id, $tag);
+        execute($find);
+        if(result_single($find) === null) {
+            $update = prepare('insert into `template_tag`(`tag`, `template`)
+                                   values (?, ?)');
+            bind($update, 'si', $tag, $this->id);
+            execute($update);
+            $this->update_tags();
+        }
+        return true;
+    }
+    
+    public function remove_tag($tag) {
+        $find = prepare('select * from `template_tag`
+                         where `template`=? and `tag`=?');
+        bind($find, 'is', $this->id, $tag);
+        execute($find);
+        if(result_single($find) === null) {
+            return true;
+        }
+        $update = prepare('delete from `template_tag`
+                           where `tag`=? and `template`=?');
+        bind($update, 'si', $tag, $this->id);
+        execute($update);
+        $this->update_tags();
+        return true;
     }
 }
 
@@ -572,17 +787,21 @@ class User {
     }
     
     public function create_loan($product, $endtime) {
-        $find = prepare('select * from `loan` where `product`=? and `returntime` is null');
+        $find = prepare('select * from `loan`
+                         where `product`=? and `returntime` is null');
         $prod_id = $product->get_id();
         bind($find, 'i', $prod_id);
         execute($find);
         $loan = result_single($find);
         if($loan !== null) {
             $loan_id = $loan['id'];
-            throw new Exception("Product $prod_id has an active loan (id $loan_id) already.");
+            throw new Exception(
+                "Product $prod_id has an active loan (id $loan_id) already.");
         }
         $now = time();
-        $insert = prepare('insert into `loan`(`user`, `product`, `starttime`, `endtime`) values (?, ?, ?, ?)');
+        $insert = prepare('insert into
+                               `loan`(`user`, `product`, `starttime`, `endtime`)
+                               values (?, ?, ?, ?)');
         bind($insert, 'iiii',
              $this->id, $prod_id,
              $now, strtotime($endtime . ' 13:00'));
@@ -700,7 +919,9 @@ class Inventory {
         execute($start);
         $invid = $start->insert_id;
         $prodid = '';
-        $register = prepare('insert into `inventory_product`(`inventory`, `product`) values (?, ?)');
+        $register = prepare('insert into
+                                 `inventory_product`(`inventory`, `product`)
+                                 values (?, ?)');
         foreach(get_items('loan_active') as $loan) {
             $prodid = $loan->get_product()->get_id();
             bind($register, 'ii', $invid, $prodid);
@@ -731,7 +952,8 @@ class Inventory {
         $result = result_single($get);
         $this->starttime = $result['starttime'];
         $this->endtime = $result['endtime'];
-        $prodget = prepare('select * from `inventory_product` where `inventory`=?');
+        $prodget = prepare('select * from `inventory_product`
+                            where `inventory`=?');
         bind($prodget, 'i', $this->id);
         execute($prodget);
         foreach(result_list($prodget) as $row) {
@@ -741,7 +963,8 @@ class Inventory {
 
     public function end() {
         $now = time();
-        $update = prepare('update `inventory` set `endtime`=? where `id`=? and `endtime` is null');
+        $update = prepare('update `inventory` set `endtime`=?
+                           where `id`=? and `endtime` is null');
         bind($update, 'ii', $now, $this->id);
         execute($update);
         $this->endtime = $now;
@@ -749,7 +972,8 @@ class Inventory {
     }
 
     public function add_product($product) {
-        $add = prepare('insert into `inventory_product`(`inventory`, `product`) values (?, ?)');
+        $add = prepare('insert into `inventory_product`(`inventory`, `product`)
+                            values (?, ?)');
         bind($add, 'ii', $this->id, $product->get_id());
         try {
             execute($add);
@@ -841,7 +1065,8 @@ class Kvs {
         bind($find, 's', $key);
         execute($find);
         if(result_single($find) === null) {
-            $update = prepare('insert into `kvs`(`value`, `key`) values (?, ?)');
+            $update = prepare('insert into `kvs`(`value`, `key`)
+                                   values (?, ?)');
         } else {
             $update = prepare('update `kvs` set `value`=? where `key`=?');
         }
