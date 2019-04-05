@@ -45,8 +45,8 @@ textarea {
     background-color: #ebf0f5;
 }
 
-.narrow {
-    width: 6em !important;
+input[type="text"].narrow {
+    width: 6em;
 }
 
 .hidden {
@@ -100,8 +100,13 @@ input:disabled {
     background-color: #ededed;
 }
 
-.newtag, .newfield {
-    width: 11.5em !important;
+input[type="text"].newtag,
+input[type="text"].newfield {
+    width: 11.5em;
+}
+
+input[type="text"].newtemplate {
+    width: 8em;
 }
 
 .minibutton {
@@ -109,7 +114,6 @@ input:disabled {
     background-image: url(images/button-background-repeater.gif);
     background-position: left;
     background-repeat: repeat-x;
-    color: white !important;
     padding-right: 2px;
     padding-left: 2px;
 }
