@@ -96,14 +96,25 @@
 ¤¤ create_product ¤¤
 <form action="./"
       method="get">
+  <datalist id="templatelist"></datalist>
   <input type="hidden"
          name="page"
          value="products" />
   <input type="hidden"
          name="action"
          value="new" />
-  <button>
+  <button onClick="JavaScript:showSiblings(event)">
     Ny artikel
+  </button>
+  <input class="hidden"
+         onFocus="JavaScript:suggest(this, 'template')"
+         list="templatelist"
+         autocomplete="off"
+         type="text"
+         name="template"
+         placeholder="Välj mall" />
+  <button class="hidden">
+    Välj
   </button>
 </form>
 
@@ -118,6 +129,16 @@
     <tfoot>
       <tr>
         <td>
+          <button onClick="JavaScript:showSiblings(event)">
+            Skapa mall
+          </button>
+          <input class="hidden newtemplate"
+                 type="text"
+                 placeholder="Mallens namn" />
+          <button class="hidden"
+                  onClick="JavaScript:toTemplate(event)">
+            Spara
+          </button>
         </td>
         <td>
           <button id="save"
