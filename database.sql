@@ -34,6 +34,37 @@ create table `product_tag` (
 ) character set utf8mb4,
   collate utf8mb4_unicode_ci;
 
+create table `template` (
+  `id` bigint(20) not null auto_increment,
+  primary key(`id`),
+  `name` varchar(64) not null,
+  unique key `key_name`(`name`)
+) character set utf8mb4,
+  collate utf8mb4_unicode_ci;
+
+create table `template_info` (
+  `id` bigint(20) not null auto_increment,
+  primary key(`id`),
+  `template` bigint(20) not null,
+  key `key_template`(`template`),
+  constraint `tf_f_template`
+    foreign key(`template`) references `template`(`id`),
+  `field` varchar(64) not null,
+  unique `uniq_template_field`(`template`, `field`)
+) character set utf8mb4,
+  collate utf8mb4_unicode_ci;
+
+create table `template_tag` (
+  `id` bigint(20) not null auto_increment,
+  primary key(`id`),
+  `template` bigint(20) not null,
+  constraint `tt_f_template`
+    foreign key(`template`) references `template`(`id`),
+  `tag` varchar(64) not null,
+  unique `uniq_template_tag`(`template`, `tag`)
+) character set utf8mb4,
+  collate utf8mb4_unicode_ci;
+
 create table `user` (
   `id` bigint(20) not null auto_increment,
   primary key(`id`),
