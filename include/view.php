@@ -454,12 +454,19 @@ class SearchPage extends Page {
 
 class ProductPage extends Page {
     private $action = 'list';
+    private $template = null;
     private $product = null;
     
     public function __construct() {
         parent::__construct();
         if(isset($_GET['action'])) {
             $this->action = $_GET['action'];
+        }
+        if(isset($_GET['template'])) {
+            $template = $_GET['template'];
+            if($template) {
+                $this->template = new Template($template, 'name');
+            }
         }
         if(isset($_GET['id'])) {
             $this->product = new Product($_GET['id']);
@@ -528,12 +535,28 @@ class ProductPage extends Page {
     }
 
     private function build_new_page() {
+        $template = '';
+        $fields = '';
+        $tags = '';
+        if($this->template) {
+            $template = $this->template->get_name();
+            foreach($this->template->get_fields() as $field) {
+                $fields .= replace(array('name' => ucfirst($field),
+                                         'key' => $field,
+                                         'value' => ''),
+                                   $this->fragments['info_item']);
+            }
+            foreach($this->template->get_tags() as $tag) {
+                $tags .= replace(array('tag' => ucfirst($tag)),
+                                 $this->fragments['tag']);
+            }
+        }
         return replace(array('id' => '',
                              'name' => '',
                              'serial' => '',
                              'invoice' => '',
-                             'tags' => '',
-                             'info' => ''),
+                             'tags' => $tags,
+                             'info' => $fields),
                        $this->fragments['product_details']);
     }
 }
@@ -933,7 +956,8 @@ class Ajax extends Responder {
         $tags = explode(',', strtolower($info['tags']));
         foreach($tags as $tag) {
             if(strpos($tag, ' ') !== false || strpos($tag, ',') !== false) {
-                return new Failure("Taggar får inte innehålla mellanslag eller kommatecken.");
+                return new Failure(
+                    'Taggar får inte innehålla mellanslag eller kommatecken.');
             }
         }
         foreach(array('id', 'name', 'serial', 'invoice', 'tags') as $key) {
@@ -952,7 +976,8 @@ class Ajax extends Responder {
         if(!$id) {
             try {
                 $temp = new Product($serial, 'serial');
-                return new Failure('Det angivna serienumret finns redan på en annan artikel.');
+                return new Failure(
+                    'Det angivna serienumret finns redan på en annan artikel.');
             } catch(Exception $e) {}
             try {
                 $product = Product::create_product($name,
@@ -1038,6 +1063,9 @@ class Ajax extends Responder {
                 break;
             case 'field':
                 return new Success(get_fields());
+                break;
+            case 'template':
+                return new Success(get_templates());
                 break;
             default:
                 return new Failure('Invalid type.');
