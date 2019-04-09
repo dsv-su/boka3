@@ -465,7 +465,11 @@ class ProductPage extends Page {
         if(isset($_GET['template'])) {
             $template = $_GET['template'];
             if($template) {
-                $this->template = new Template($template, 'name');
+                try {
+                    $this->template = new Template($template, 'name');
+                } catch(Exception $e) {
+                    $template = null;
+                }
             }
         }
         if(isset($_GET['id'])) {
@@ -551,13 +555,16 @@ class ProductPage extends Page {
                                  $this->fragments['tag']);
             }
         }
-        return replace(array('id' => '',
-                             'name' => '',
-                             'serial' => '',
-                             'invoice' => '',
-                             'tags' => $tags,
-                             'info' => $fields),
-                       $this->fragments['product_details']);
+        $out = replace(array('template' => $template),
+                       $this->fragments['template_management']);
+        $out .= replace(array('id' => '',
+                              'name' => '',
+                              'serial' => '',
+                              'invoice' => '',
+                              'tags' => $tags,
+                              'info' => $fields),
+                        $this->fragments['product_details']);
+        return $out;
     }
 }
 
@@ -760,49 +767,6 @@ class HistoryPage extends Page {
                              'rows' => $rows),
                        $this->fragments['inventory_table']);
     }
-
-    protected function temp($loans) {
-        $rows = '';
-        $renew_column_visible = 'hidden';
-        foreach($loans as $loan) {
-            $user = $loan->get_user();
-            $product = $loan->get_product();
-            $userlink = replace(array('id' => $user->get_id(),
-                                      'name' => $user->get_name(),
-                                      'page' => 'users'),
-                                $this->fragments['item_link']);
-            $available = '';
-            $duration = $loan->get_duration();
-            $status = 'on_loan';
-            if($loan->is_overdue()) {
-                $status = 'overdue';
-            }
-            $returndate = '';
-            $renew_visible = '';
-            if($duration['return']) {
-                $returndate = $duration['return'];
-                $renew_visible = 'hidden';
-            } else {
-                $renew_column_visible = '';
-            }
-            $rows .= replace(array('item_link' => $userlink,
-                                   'start_date' => $duration['start'],
-                                   'end_date' => $duration['end'],
-                                   'return_date' => $returndate,
-                                   'status' => $status,
-                                   'vis_renew' => $renew_column_visible,
-                                   'vis_renew_button' => $renew_visible,
-                                   'vis_return' => '',
-                                   'id' => $product->get_id(),
-                                   'end_new' => $duration['end_renew']),
-                             $this->fragments['loan_row']);
-        }
-        return replace(array('rows' => $rows,
-                             'vis_renew' => $renew_column_visible,
-                             'vis_return' => '',
-                             'item' => 'Låntagare'),
-                       $this->fragments['loan_table']);
-    }
 }
 
 class Ajax extends Responder {
@@ -848,11 +812,18 @@ class Ajax extends Responder {
             case 'updateuser':
                 $out = $this->update_user();
                 break;
+            case 'savetemplate':
+                $out = $this->save_template();
+                break;
+            case 'deletetemplate':
+                $out = $this->delete_template();
+                break;
             case 'suggest':
                 $out = $this->suggest();
                 break;
             case 'discardproduct':
                 $out = $this->discard_product();
+                break;
         }
         print($out->toJson());
     }
@@ -953,13 +924,7 @@ class Ajax extends Responder {
         $name = $info['name'];
         $serial = $info['serial'];
         $invoice = $info['invoice'];
-        $tags = explode(',', strtolower($info['tags']));
-        foreach($tags as $tag) {
-            if(strpos($tag, ' ') !== false || strpos($tag, ',') !== false) {
-                return new Failure(
-                    'Taggar får inte innehålla mellanslag eller kommatecken.');
-            }
-        }
+        $tags = $this->extract_tags($info['tags']);
         foreach(array('id', 'name', 'serial', 'invoice', 'tags') as $key) {
             unset($info[$key]);
         }
@@ -1056,6 +1021,67 @@ class Ajax extends Responder {
         return new Success('Ändringarna sparade.');
     }
 
+    private function save_template() {
+        $info = $_POST;
+        $name = $info['template'];
+        $tags = $this->extract_tags($info['tags']);
+        foreach(array('template',
+                      'id',
+                      'name',
+                      'serial',
+                      'invoice',
+                      'tags') as $key) {
+            unset($info[$key]);
+        }
+        if(!$name) {
+            return new Failure('Mallen måste ha ett namn.');
+        }
+        $template = null;
+        try {
+            $template = new Template($name, 'name');
+        } catch(Exception $e) {
+            $template = Template::create_template($name, $info, $tags);
+            $name = $template->get_name();
+            return new Success(
+                "Aktuella fält och taggar har sparats till mallen '$name'.");
+        }
+        foreach($template->get_fields() as $field) {
+            if(!isset($info[$field])) {
+                $template->remove_field($field);
+            }
+        }
+        $existingfields = $template->get_fields();
+        foreach($info as $field) {
+            if(!in_array($field, $existingfields)) {
+                $template->add_field($field);
+            }
+        }
+        foreach($template->get_tags() as $tag) {
+            if(!in_array($tag, $tags)) {
+                $template->remove_tag($tag);
+            }
+        }
+        $existingtags = $template->get_tags();
+        foreach($tags as $tag) {
+            if(!in_array($tag, $existingtags)) {
+                $template->add_tag($tag);
+            }
+        }
+        $name = $template->get_name();
+        return new Success("Mallen '$name' uppdaterad.");
+    }
+
+    private function delete_template() {
+        try {
+            $template = $_POST['template'];
+            Template::delete_template($template);
+            $name = ucfirst(strtolower($template));
+            return new Success("Mallen '$name' har raderats.");
+        } catch(Exception $e) {
+            return new Failure('Det finns ingen mall med det namnet.');
+        }
+    }
+    
     private function suggest() {
         switch($_POST['type']) {
             case 'tag':
@@ -1084,6 +1110,21 @@ class Ajax extends Responder {
         } else {
             return new Failure('Artikeln är redan skrotad.');
         }
+    }
+
+    private function extract_tags($string) {
+        $tags = explode(',', strtolower($string));
+        # Unescape specials
+        foreach($tags as $key => $tag) {
+            $tags[$key] = str_replace(array('&#44;',
+                                            '&#39;',
+                                            '&#34;'),
+                                      array(',',
+                                            "'",
+                                            '"'),
+                                      $tag);
+        }
+        return $tags;
     }
 }
 
