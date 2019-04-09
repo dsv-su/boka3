@@ -468,10 +468,10 @@ class Template {
         try {
             $stmt = 'insert into `template`(`name`) values (?)';
             $ins_prod = prepare($stmt);
-            bind($ins_prod, 's', $name);
+            bind($ins_prod, 's', strtolower($name));
             execute($ins_prod);
             $template = new Template($name, 'name');
-            foreach($fields as $field) {
+            foreach(array_keys($fields) as $field) {
                 $template->add_field($field);
             }
             foreach($tags as $tag) {
@@ -483,6 +483,20 @@ class Template {
             revert_trans();
             throw $e;
         }
+    }
+
+    public static function delete_template($name) {
+        $template = new Template($name, 'name');
+        foreach($template->get_fields() as $field) {
+            $template->remove_field($field);
+        }
+        foreach($template->get_tags() as $tag) {
+            $template->remove_tag($tag);
+        }
+        $delete = prepare('delete from `template` where `id`=?');
+        bind($delete, 'i', $template->get_id());
+        execute($delete);
+        return true;
     }
     
     public function __construct($clue, $type = 'id') {
@@ -500,7 +514,7 @@ class Template {
                 $this->name = $result['name'];
                 break;
             case 'name':
-                $this->name = $clue;
+                $this->name = strtolower($clue);
                 $search = prepare('select `id` from `template`
                                    where `name`=?');
                 bind($search, 's', $this->name);
@@ -517,9 +531,13 @@ class Template {
         $this->update_fields();
         $this->update_tags();
     }
+
+    public function get_id() {
+        return $this->id;
+    }
     
     public function get_name() {
-        return $this->name;
+        return ucfirst($this->name);
     }
 
     public function set_name($name) {
