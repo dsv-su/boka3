@@ -29,12 +29,8 @@ function ajaxRequest(action, datalist, callback) {
 }
 
 function showResult(result) {
+    hideMessage()
     var contents = document.querySelector('#contents')
-    var oldmessage = contents.querySelector('#message')
-    
-    if(oldmessage) {
-        contents.removeChild(oldmessage)
-    }
 
     var render = function(fragment) {
         var temp = document.createElement('template')
@@ -49,10 +45,12 @@ function showResult(result) {
     getFragment('message', render)
 }
 
-function hideMessage(event) {
+function hideMessage() {
     var contents = document.querySelector('#contents')
     var message = contents.querySelector('#message')
-    contents.removeChild(message)
+    if(message) {
+        contents.removeChild(message)
+    }
 }
 
 function reloadOrError(result) {
@@ -148,7 +146,6 @@ function endInventory(event) {
 
 function inventoryProduct(event) {
     event.preventDefault()
-    console.log(dataListFromForm(event.currentTarget))
     ajaxRequest('inventoryproduct',
                 dataListFromForm(event.currentTarget),
                 reloadOrError)
@@ -184,7 +181,7 @@ function suggest(input, type) {
         }
         var suggestions = result.message
         for(var i = 0; i < suggestions.length; i++) {
-            var suggestion = suggestions[i]
+            var suggestion = suggestions[i].toLowerCase()
             if(existing.indexOf(suggestion) != -1) {
                 continue
             }
@@ -211,8 +208,9 @@ function addField(event) {
     }
     var key = nameField.value.toLowerCase()
     if(form.querySelector('input[name="' + key + '"]')) {
-        return showResult({'type': 'error',
-                           'message': 'Det finns redan ett fält med det namnet.'})
+        return showResult(
+            {'type': 'error',
+             'message': 'Det finns redan ett fält med det namnet.'})
     }
     var name = key.charAt(0).toUpperCase() + key.slice(1)
     var render = function(fragment) {
@@ -239,6 +237,13 @@ function addField(event) {
     getFragment('info_item', render)
 }
 
+function escapeTag(tag) {
+    return tag
+        .replace(/,/, '&#44;')
+        .replace(/'/, '&#39;')
+        .replace(/"/, '&#34;')
+}
+
 function addTag(event) {
     if(event.key && event.key != "Enter") {
         return suggest(event.currentTarget, 'tag')
@@ -246,14 +251,10 @@ function addTag(event) {
     event.preventDefault()
     var tr = event.currentTarget.parentNode.parentNode
     var field = tr.querySelector('.newtag')
-    var tagname = field.value
+    var tagname = escapeTag(field.value)
     if(!tagname) {
         return showResult({'type': 'error',
                            'message': 'Taggen måste ha ett namn.'})
-    }
-    if(tagname.indexOf(',') > -1 || tagname.indexOf(' ') > -1) {
-        return showResult({'type': 'error',
-                           'message': 'Taggar får inte innehålla mellanslag eller kommatecken.'})
     }
     tagname = tagname.charAt(0).toUpperCase() + tagname.slice(1)
     var tagElements = tr.querySelectorAll('.tag')
@@ -284,17 +285,47 @@ function addTag(event) {
 
 function removeTag(event) {
     event.preventDefault()
-    var tag = event.currentTarget
+    var tag = event.currentTarget.parentNode
     var parent = tag.parentNode
     parent.remove(tag)
 }
 
-function showSiblings(event) {
-    event.preventDefault()
-    var siblings = event.currentTarget.parentNode.children
-    for (var i = 0; i < siblings.length; i++) {
-        siblings[i].classList.toggle('hidden')
+function loadTemplate(event) {
+    var form = event.currentTarget
+    var template = form.template.value
+    if(template === '') {
+        return
     }
+    var options = form.querySelector('#templatelist').options
+    for(var i = 0; i < options.length; i++) {
+        if(options[i].value == template) {
+            return
+        }
+    }
+    event.preventDefault()
+    showResult({'type': 'error',
+                'message': 'Det finns ingen mall med det namnet.'})
+}
+
+function saveTemplate(event) {
+    event.preventDefault()
+    var datalist = productDataList(document.querySelector('#productdata'))
+    datalist.push(['template', event.currentTarget.form.template.value])
+    ajaxRequest('savetemplate', datalist, showResult)
+}
+
+function deleteTemplate(event) {
+    var input = event.currentTarget.form.template
+    event.preventDefault()
+    var render = function(result) {
+        if(result.type == 'success') {
+            input.value = ''
+        }
+        showResult(result)
+    }
+    ajaxRequest('deletetemplate',
+                dataListFromForm(event.currentTarget.form),
+                render)
 }
 
 function saveProduct(event) {
@@ -310,37 +341,16 @@ function saveProduct(event) {
     } else {
         action = 'update'
     }
-    var filter = function(input) {
-        var name = input.name
-        if(name == 'new_key' || name == 'new_tag') {
-            return false
-        }
-        return true
-    }
-    var datalist = dataListFromForm(form, filter)
-    var tagElements = form.querySelectorAll('.tag')
-    var tags = []
-    for(var i = 0; i < tagElements.length; i++) {
-        tags.push(tagElements[i].dataset['name'])
-    }
-    datalist.push(['tags', tags])
+    var datalist = productDataList(form)
     var render = function(result) {
-        showResult(result)
         if(action == 'save' && result.type == 'success') {
-            var reset = function(fragment) {
-                var temp = document.createElement('template')
-                temp.innerHTML = replace(fragment, [['id', ''],
-                                                    ['name', ''],
-                                                    ['invoice', ''],
-                                                    ['serial', ''],
-                                                    ['info', ''],
-                                                    ['tags', '']])
-                temp = temp.content.firstChild
-                form.replaceWith(temp)
+            showResult(result)
+            var inputs = form.querySelectorAll('input[type="text"]')
+            for(var i = 0; i < inputs.length; i++) {
+                inputs[i].value = '';
             }
-            getFragment('product_details', reset)
         } else {
-            return reloadOrError(result)
+            reloadOrError(result)
         }
     }
     ajaxRequest('updateproduct', datalist, render)
@@ -354,6 +364,24 @@ function updateUser(event) {
     }
     var form = event.currentTarget
     ajaxRequest('updateuser', dataListFromForm(form), reloadOrError)
+}
+
+function productDataList(form) {
+    var filter = function(input) {
+        var name = input.name
+        if(name == 'new_key' || name == 'new_tag') {
+            return false
+        }
+        return true
+    }
+    var datalist = dataListFromForm(form, filter)
+    var tagElements = form.querySelectorAll('.tag')
+    var tags = []
+    for(var i = 0; i < tagElements.length; i++) {
+        tags.push(escapeTag(tagElements[i].dataset['name']))
+    }
+    datalist.push(['tags', tags])
+    return datalist
 }
 
 function calendar(event) {
