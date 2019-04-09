@@ -96,6 +96,21 @@
 ¤¤ create_product ¤¤
 <form action="./"
       method="get">
+  <input type="hidden"
+         name="page"
+         value="products" />
+  <input type="hidden"
+         name="action"
+         value="new" />
+  <button>
+    Ny artikel
+  </button>
+</form>
+
+¤¤ template_management ¤¤
+<h2>Mallar</h2>
+<form class="dark templates"
+      onSubmit="JavaScript:loadTemplate(event)">
   <datalist id="templatelist"></datalist>
   <input type="hidden"
          name="page"
@@ -103,23 +118,28 @@
   <input type="hidden"
          name="action"
          value="new" />
-  <button onClick="JavaScript:showSiblings(event)">
-    Ny artikel
-  </button>
-  <input class="hidden"
-         onFocus="JavaScript:suggest(this, 'template')"
+  <input onFocus="JavaScript:suggest(this, 'template')"
          list="templatelist"
          autocomplete="off"
          type="text"
          name="template"
-         placeholder="Välj mall" />
-  <button class="hidden">
-    Välj
+         value="¤template¤"
+         placeholder="Namn" />
+  <button>
+    Ladda
+  </button>
+  <button onClick="JavaScript:saveTemplate(event)">
+    Spara
+  </button>
+  <button onClick="JavaScript:deleteTemplate(event)">
+    Ta bort
   </button>
 </form>
 
 ¤¤ product_details ¤¤
-<form onSubmit="JavaScript:saveProduct(event)">
+<h2>Artikeldata</h2>
+<form id="productdata"
+      onSubmit="JavaScript:saveProduct(event)">
   <input type="hidden"
          name="id"
          value="¤id¤" />
@@ -129,16 +149,6 @@
     <tfoot>
       <tr>
         <td>
-          <button onClick="JavaScript:showSiblings(event)">
-            Skapa mall
-          </button>
-          <input class="hidden newtemplate"
-                 type="text"
-                 placeholder="Mallens namn" />
-          <button class="hidden"
-                  onClick="JavaScript:toTemplate(event)">
-            Spara
-          </button>
         </td>
         <td>
           <button id="save"
@@ -389,34 +399,37 @@
 </tr>
 
 ¤¤ checkout_page ¤¤
-<h3>Välj låntagare</h3>
+<h2>Välj låntagare</h2>
 <form class="dark"
       action="./"
       method="GET">
   <input type="hidden"
          name="page"
          value="checkout" />
-  <span class="label">
-    Användarnamn:
-  </span>
-  <input type="text"
-         name="user"
-         placeholder="Användarnamn"
-         value="¤user¤"
-         required />
-  <button type="submit" >
-    Välj
-  </button>
-  <br/>
-  <span class="label">
-    Namn:
-  </span>
-  <input type="text"
-         name="displayname"
-         value="¤displayname¤"
-         disabled />
+  <div>
+    <span class="label">
+      Användarnamn:
+    </span>
+    <input type="text"
+           name="user"
+           placeholder="Användarnamn"
+           value="¤user¤"
+           required />
+    <button type="submit" >
+      Välj
+    </button>
+  </div>
+  <div>
+    <span class="label">
+      Namn:
+    </span>
+    <input type="text"
+           name="displayname"
+           value="¤displayname¤"
+           disabled />
+  </div>
 </form>
-<h3>Låna ut artikel</h3>
+<h2>Låna ut artikel</h2>
 <form class="light"
       onSubmit="JavaScript:checkoutProduct(event)">
   <input type="hidden"
