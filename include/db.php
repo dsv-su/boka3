@@ -664,21 +664,23 @@ class User {
     }
 
     public function __construct($clue, $type = 'id') {
-        $id = $clue;
+        $find = null;
         switch($type) {
             case 'id':
+                $find = prepare('select `id` from `user` where `id`=?');
+                bind($find, 'i', $clue);
                 break;
             case 'name':
                 $find = prepare('select `id` from `user` where `name`=?');
                 bind($find, 's', $clue);
-                execute($find);
-                $id = result_single($find)['id'];
-                if($id === null) {
-                    throw new Exception("Invalid username '$clue'");
-                }
                 break;
             default:
                 throw new Exception('Invalid type');
+        }
+        execute($find);
+        $id = result_single($find)['id'];
+        if($id === null) {
+            throw new Exception("Invalid username '$clue'");
         }
         $this->id = $id;
         $this->update_fields();

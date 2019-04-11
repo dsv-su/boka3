@@ -586,7 +586,15 @@ class UserPage extends Page {
             $this->action = $_GET['action'];
         }
         if(isset($_GET['id'])) {
-            $this->user = new User($_GET['id']);
+            $id = $_GET['id'];
+            if($id) {
+                try {
+                    $this->user = new User($_GET['id']);
+                } catch(Exception $e) {
+                    $this->user = null;
+                    $this->action = 'list';
+                }
+            }
         }
         switch($this->action) {
             case 'show':
