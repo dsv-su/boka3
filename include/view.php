@@ -468,12 +468,20 @@ class ProductPage extends Page {
                 try {
                     $this->template = new Template($template, 'name');
                 } catch(Exception $e) {
-                    $template = null;
+                    $this->template = null;
                 }
             }
         }
         if(isset($_GET['id'])) {
-            $this->product = new Product($_GET['id']);
+            $id = $_GET['id'];
+            if($id) {
+                try {
+                    $this->product = new Product($id);
+                } catch(Exception $e) {
+                    $this->action = 'list';
+                    $this->product = null;
+                }
+            }
         }
         switch($this->action) {
             case 'show':

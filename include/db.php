@@ -165,24 +165,27 @@ class Product {
     }
     
     public function __construct($clue, $type = 'id') {
+        $search = null;
         switch($type) {
             case 'id':
-                $this->id = $clue;
+                $search = prepare('select `id` from `product`
+                                   where `id`=?');
+                bind($search, 'i', $clue);
                 break;
             case 'serial':
                 $search = prepare('select `id` from `product`
                                    where `serial`=?');
                 bind($search, 's', $clue);
-                execute($search);
-                $result = result_single($search);
-                if($result === null) {
-                    throw new Exception('Invalid serial.');
-                }
-                $this->id = $result['id'];
                 break;
             default:
                 throw new Exception('Invalid type.');
         }
+        execute($search);
+        $result = result_single($search);
+        if($result === null) {
+            throw new Exception('Product does not exist..');
+        }
+        $this->id = $result['id'];
         $this->update_fields();
         $this->update_info();
         $this->update_tags();
