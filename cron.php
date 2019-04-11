@@ -37,12 +37,12 @@ class Cron {
     }
     
     private function send_reminder($user, $loans) {
-        $subject_template = "DMC Helpdesk: Du har ¤count¤ försenade lån";
+        $subject_template = "DSV Helpdesk: Du har ¤count¤ ¤late¤ lån";
         $reminder_template = "¤name¤, försenad sedan ¤due¤\n";
         $message_template = <<<EOF
 Hej ¤name¤
 
-Vi vill påminna dig om att ditt lån av följande artiklar har gått ut:
+Vi vill påminna dig om att ditt lån av följande ¤product¤ har gått ut:
 
 ¤list¤
 
@@ -50,22 +50,30 @@ Vänligen återlämna dem till Helpdesk så snart som möjligt, alternativt kont
 oss för att få lånet förlängt.
 
 Mvh
-DMC Helpdesk
+DSV Helpdesk
 helpdesk@dsv.su.se
 08 - 16 16 48
 EOF;
 
         $overdue_count = count($loans);
         $reminder_list = '';
+        $late = 'försenat';
+        $product = 'artikel';
+        if($count > 1) {
+            $late = 'försenade';
+            $product = 'artiklar';
+        }
         foreach($loans as $loan) {
             $replacements = array('name' => $loan->get_product()->get_name(),
                                   'due'  => $loan->get_duration()['end']);
             $reminder_list .= replace($replacements, $reminder_template);
         }
 
-        $subject = replace(array('count' => $overdue_count), $subject_template);
-        $message = replace(array('name' => $user->get_displayname(),
-                                 'list' => $reminder_list), $message_template);
+        $subject = replace(array('count' => $overdue_count,
+                                 'late'  => $late), $subject_template);
+        $message = replace(array('name'    => $user->get_displayname(),
+                                 'list'    => $reminder_list,
+                                 'product' => $product), $message_template);
 
         try {
             mb_send_mail($user->get_email(),
@@ -75,7 +83,8 @@ EOF;
         } catch(Exception $e) {
             mb_send_mail('root@dsv.su.se',
                          "Kunde inte skicka påminnelse",
-                         "Påminnelse kunde inte skickas till ".$user->get_name());
+                         "Påminnelse kunde inte skickas till "
+                         .$user->get_name());
         }
     }
 }

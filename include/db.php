@@ -83,42 +83,39 @@ function get_items($type) {
     return $list;
 }
 
-function get_tags() {
-    $search = prepare(
-        '(select `tag` from `product_tag`)
-         union
-         (select `tag` from `template_tag`)
-         order by `tag`'
-    );
-    execute($search);
-    $out = array();
-    foreach(result_list($search) as $row) {
-        $out[] = $row['tag'];
+function suggest($type) {
+    $search = '';
+    $typename = 'name';
+    switch($type) {
+        case 'user':
+            $search = prepare('select `name` from `user` order by `name`');
+            break;
+        case 'template':
+            $search = prepare('select `name` from `template` order by `name`');
+            break;
+        case 'tag':
+            $search = prepare(
+                '(select `tag` from `product_tag`)
+                 union
+                 (select `tag` from `template_tag`)
+                 order by `tag`');
+            $typename = 'tag';
+            break;
+        case 'field':
+            $search = prepare(
+                '(select `field` from `product_info`)
+                 union
+                 (select `field` from `template_info`)
+                 order by `field`');
+            $typename = 'field';
+            break;
+        default:
+            return array();
     }
-    return $out;
-}
-
-function get_fields() {
-    $search = prepare(
-        '(select `field` from `product_info`)
-         union
-         (select `field` from `template_info`)
-         order by `field`'
-    );
     execute($search);
     $out = array();
     foreach(result_list($search) as $row) {
-        $out[] = $row['field'];
-    }
-    return $out;
-}
-
-function get_templates() {
-    $search = prepare('select `name` from `template` order by `name`');
-    execute($search);
-    $out = array();
-    foreach(result_list($search) as $row) {
-        $out[] = $row['name'];
+        $out[] = $row[$typename];
     }
     return $out;
 }

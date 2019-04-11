@@ -403,6 +403,7 @@
 <form class="dark"
       action="./"
       method="GET">
+  <datalist id="userlist"></datalist>
   <input type="hidden"
          name="page"
          value="checkout" />
@@ -410,8 +411,11 @@
     <span class="label">
       Användarnamn:
     </span>
-    <input type="text"
+    <input onFocus="JavaScript:suggest(this, 'user')"
+           type="text"
            name="user"
+           list="userlist"
+           autocomplete="off"
            placeholder="Användarnamn"
            value="¤user¤"
            required />
@@ -427,6 +431,13 @@
            name="displayname"
            value="¤displayname¤"
            disabled />
+  </div>
+  <div>
+    <span class="label">
+      Anteckningar:
+    </span>
+    <textarea name="notes"
+              disabled>¤notes¤</textarea>
   </div>
 </form>
 <h2>Låna ut artikel</h2>

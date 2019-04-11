@@ -38,7 +38,7 @@ abstract class Page extends Responder {
     protected abstract function render_body();
     
     protected $page = 'checkout';
-    protected $title = "Boka2";
+    protected $title = "DSV Utlåning";
     protected $subtitle = '';
     protected $error = null;
     protected $menuitems = array('checkout' => 'Låna',
@@ -666,12 +666,14 @@ class CheckoutPage extends Page {
     protected function render_body() {
         $username = '';
         $displayname = '';
+        $notes = '';
         $loan_table = '';
         $subhead = '';
         $enddate = gmdate('Y-m-d', time() + 604800); # 1 week from now
         if($this->user !== null) {
             $username = $this->user->get_name();
             $displayname = $this->user->get_displayname();
+            $notes = $this->user->get_notes();
             $loans = $this->user->get_loans('active');
             $loan_table = 'Inga pågående lån.';
             if($loans) {
@@ -682,6 +684,7 @@ class CheckoutPage extends Page {
         }
         print(replace(array('user' => $this->userstr,
                             'displayname' => $displayname,
+                            'notes' => $notes,
                             'end' => $enddate,
                             'subtitle' => $subhead,
                             'loan_table' => $loan_table),
@@ -878,7 +881,17 @@ class Ajax extends Responder {
         $loan = $product->get_active_loan();
         if($loan) {
             $loan->end();
-            return new Success($product->get_name() . ' har lämnats tillbaka.');
+            $user = $loan->get_user();
+            $userlink = replace(array('page' => 'users',
+                                      'id'   => $user->get_id(),
+                                      'name' => $user->get_displayname()),
+                                $this->fragments['item_link']);
+            $productlink = replace(array('page' => 'products',
+                                         'id'   => $product->get_id(),
+                                         'name' => $product->get_name()),
+                                   $this->fragments['item_link']);
+            $user = $loan->get_user();
+            return new Success($productlink . ' åter från ' . $userlink);
         }
         return new Failure('Artikeln är inte utlånad.');
     }
@@ -1099,19 +1112,7 @@ class Ajax extends Responder {
     }
     
     private function suggest() {
-        switch($_POST['type']) {
-            case 'tag':
-                return new Success(get_tags());
-                break;
-            case 'field':
-                return new Success(get_fields());
-                break;
-            case 'template':
-                return new Success(get_templates());
-                break;
-            default:
-                return new Failure('Invalid type.');
-        }
+        return new Success(suggest($_POST['type']));
     }
 
     private function discard_product() {

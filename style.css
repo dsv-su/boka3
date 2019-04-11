@@ -96,7 +96,7 @@ thead th, tfoot tr {
     background-color: #c3d1e2;
 }
 
-input:disabled {
+input:disabled, textarea:disabled {
     background-color: #ededed;
 }
 

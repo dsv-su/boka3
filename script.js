@@ -153,6 +153,7 @@ function inventoryProduct(event) {
 
 function suggest(input, type) {
     var existing = []
+    var capitalize = true
     switch(type) {
     default:
         return showResult({'type':'error',
@@ -173,6 +174,9 @@ function suggest(input, type) {
         break
     case 'template':
         break
+    case 'user':
+        capitalize = false
+        break
     }
     var render = function(result) {
         var suggestlist = document.querySelector('#' + type + 'list')
@@ -186,8 +190,12 @@ function suggest(input, type) {
                 continue
             }
             var next = document.createElement('option')
-            next.value = suggestion.charAt(0).toUpperCase()
-                + suggestion.slice(1)
+            if(capitalize) {
+                next.value = suggestion.charAt(0).toUpperCase()
+                    + suggestion.slice(1)
+            } else {
+                next.value = suggestion
+            }
             suggestlist.appendChild(next)
         }
     }
