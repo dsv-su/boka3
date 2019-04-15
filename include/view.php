@@ -315,19 +315,19 @@ abstract class Page extends Responder {
                              'seen_count' => count($seen),
                              'hide' => $hidden),
                        $this->fragments['inventory_do']);
-        $out .= replace(array('title' => 'Inventerade artiklar'),
-                        $this->fragments['subtitle']);
-        if($seen) {
-            $out .= $this->build_product_table($seen);
-        } else {
-            $out .= 'Inga artiklar inventerade.';
-        }
         $out .= replace(array('title' => $missing),
                         $this->fragments['subtitle']);
         if($unseen) {
             $out .= $this->build_product_table($unseen);
         } else {
             $out .= 'Inga artiklar saknas.';
+        }
+        $out .= replace(array('title' => 'Inventerade artiklar'),
+                        $this->fragments['subtitle']);
+        if($seen) {
+            $out .= $this->build_product_table($seen);
+        } else {
+            $out .= 'Inga artiklar inventerade.';
         }
         return $out;
     }
@@ -469,6 +469,7 @@ class ProductPage extends Page {
                     $this->template = new Template($template, 'name');
                 } catch(Exception $e) {
                     $this->template = null;
+                    $this->error = 'Det finns ingen mall med det namnet.';
                 }
             }
         }
@@ -480,6 +481,7 @@ class ProductPage extends Page {
                 } catch(Exception $e) {
                     $this->action = 'list';
                     $this->product = null;
+                    $this->error = 'Det finns ingen artikel med det ID-numret.';
                 }
             }
         }
@@ -593,6 +595,7 @@ class UserPage extends Page {
                 } catch(Exception $e) {
                     $this->user = null;
                     $this->action = 'list';
+                    $this->error = 'Det finns ingen användare med det ID-numret.';
                 }
             }
         }
@@ -725,7 +728,13 @@ class HistoryPage extends Page {
             $this->action = $_GET['action'];
         }
         if(isset($_GET['id'])) {
-            $this->inventory = new Inventory($_GET['id']);
+            try {
+                $this->inventory = new Inventory($_GET['id']);
+            } catch(Exception $e) {
+                $this->inventory = null;
+                $this->action = 'list';
+                $this->error = 'Det finns ingen inventering med det ID-numret.';
+            }
         }
         switch($this->action) {
             case 'show':

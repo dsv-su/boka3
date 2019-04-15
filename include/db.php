@@ -961,7 +961,14 @@ class Inventory {
     }
     
     public function __construct($id) {
-        $this->id = $id;
+        $search = prepare('select `id` from `inventory` where `id`=?');
+        bind($search, 'i', $id);
+        execute($search);
+        $result = result_single($search);
+        if($result === null) {
+            throw new Exception('Invalid id');
+        }
+        $this->id = $result['id'];
         $this->update_fields();
     }
 
