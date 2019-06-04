@@ -220,26 +220,20 @@ button:disabled, input[type="submit"]:disabled {
     background-color: #002E5F;
     margin: 0px;
     font-size: 130%;
+    position: relative;
 }
 
 #menu .item {
-    padding-left: 12px;
-    padding-right: 12px;
+    padding: 8px 12px;
     margin-left:6px;
     margin-right: 6px;
     text-decoration: none;
     color: #005B7F;
     height: 100%;
-    padding-top: 8px;
 }
 
 #menu .active {
     background-color: #FFF;
-}
-
-#menu #search {
-    padding-top: 7px;
-    padding-right: 0px;
 }
 
 #contents {

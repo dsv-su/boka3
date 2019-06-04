@@ -118,14 +118,20 @@ input[type="text"].newtemplate {
     padding-left: 2px;
 }
 
-.tagremove {
+.tagremove, .termremove {
     background-color: #e17e33;
     padding-left: 2px;
     padding-right: 2px;
     color: white;
 }
 
-.tagremove:hover {
+.tagremove:hover, .termremove:hover {
     cursor: pointer;
     color: white;
+}
+
+.term {
+    background-color: #ebf0f5;
+    margin: 5px;
+    padding-left: 2px;
 }

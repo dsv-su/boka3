@@ -61,9 +61,31 @@ function reloadOrError(result) {
     }
 }
 
+function ucfirst(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase()
+}
+
+function fixDuplicateInputNames(fields) {
+    var names = {}
+    for(var i = 0; i < fields.length; i++) {
+        var name = fields[i].name
+        if(name.endsWith('[]')) {
+            continue
+        }
+        if(names.hasOwnProperty(name)) {
+            fields[i].name = name + '[]'
+            fields[names[name]].name = name + '[]'
+        } else {
+            names[name] = i
+        }
+    }
+    return true
+}
+
 function dataListFromForm(form, filter = function(field) {return true}) {
     var out = []
     var fields = form.querySelectorAll('input,textarea')
+    fixDuplicateInputNames(fields)
     for(var i = 0; i < fields.length; i++) {
         if(filter(fields[i])) {
             out.push([fields[i].name, fields[i].value])
@@ -166,9 +188,9 @@ function suggest(input, type) {
         }
         break
     case 'tag':
-        var taglist = document.querySelectorAll('#tags > p')
+        var taglist = document.querySelectorAll('#tags .tag > input')
         for(var i = 0; i < taglist.length; i++) {
-            var tag = taglist[i].firstElementChild.dataset.name
+            var tag = taglist[i].name
             existing.push(tag.toLowerCase())
         }
         break
@@ -191,8 +213,7 @@ function suggest(input, type) {
             }
             var next = document.createElement('option')
             if(capitalize) {
-                next.value = suggestion.charAt(0).toUpperCase()
-                    + suggestion.slice(1)
+                next.value = ucfirst(suggestion)
             } else {
                 next.value = suggestion
             }
@@ -220,7 +241,7 @@ function addField(event) {
             {'type': 'error',
              'message': 'Det finns redan ett fält med det namnet.'})
     }
-    var name = key.charAt(0).toUpperCase() + key.slice(1)
+    var name = ucfirst(key)
     var render = function(fragment) {
         var temp = document.createElement('template')
         fragment = replace(fragment, [
@@ -245,9 +266,8 @@ function addField(event) {
     getFragment('info_item', render)
 }
 
-function escapeTag(tag) {
-    return tag
-        .replace(/,/, '&#44;')
+function escapeText(text) {
+    return text
         .replace(/'/, '&#39;')
         .replace(/"/, '&#34;')
 }
@@ -259,15 +279,15 @@ function addTag(event) {
     event.preventDefault()
     var tr = event.currentTarget.parentNode.parentNode
     var field = tr.querySelector('.newtag')
-    var tagname = escapeTag(field.value)
+    var tagname = escapeText(field.value)
     if(!tagname) {
         return showResult({'type': 'error',
                            'message': 'Taggen måste ha ett namn.'})
     }
-    tagname = tagname.charAt(0).toUpperCase() + tagname.slice(1)
-    var tagElements = tr.querySelectorAll('.tag')
+    tagname = ucfirst(tagname)
+    var tagElements = tr.querySelectorAll('.tag > input')
     for(var i = 0; i < tagElements.length; i++) {
-        var oldtag = tagElements[i].dataset['name']
+        var oldtag = tagElements[i].name
         if(tagname.toLowerCase() == oldtag.toLowerCase()) {
             return showResult({'type': 'error',
                                'message': 'Det finns redan en sån tagg på artikeln.'})
@@ -383,12 +403,6 @@ function productDataList(form) {
         return true
     }
     var datalist = dataListFromForm(form, filter)
-    var tagElements = form.querySelectorAll('.tag')
-    var tags = []
-    for(var i = 0; i < tagElements.length; i++) {
-        tags.push(escapeTag(tagElements[i].dataset['name']))
-    }
-    datalist.push(['tags', tags])
     return datalist
 }
 
@@ -418,4 +432,49 @@ function discardProduct(event) {
         }
     }
     ajaxRequest('discardproduct', dataListFromForm(form), render)
+}
+
+function searchInput(event) {
+    if(event.key != "Enter") {
+        return
+    }
+    var input = event.target
+    var term = input.value.toLowerCase()
+    if(term === '') {
+        return
+    }
+    event.preventDefault()
+    var terms = document.querySelector('#terms')
+    var parts = escapeText(term).trim().split(':')
+    var parsedTerm = 'Fritext: ' + parts[0]
+    var key = 'fritext'
+    var value = parts[0]
+    if(parts.length > 1) {
+        key = parts[0].trim()
+        value = parts.slice(1).join(':').trim()
+        parsedTerm = ucfirst(key) + ': ' + value
+    }
+    var render = function(fragment) {
+        var temp = document.createElement('template')
+        fragment = replace(fragment, [['term', parsedTerm],
+                                      ['key', key],
+                                      ['value', value]])
+        temp.innerHTML = fragment
+        terms.append(temp.content.firstChild)
+        input.value = ''
+    }
+    getFragment('search_term', render)
+}
+
+function doSearch(event) {
+    var form = document.querySelector('#search')
+    var fields = form.querySelectorAll('input,textarea')
+    fixDuplicateInputNames(fields)
+}
+
+function removeTerm(event) {
+    event.preventDefault()
+    var term = event.currentTarget.parentNode
+    var parent = term.parentNode
+    parent.remove(term)
 }

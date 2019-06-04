@@ -120,6 +120,20 @@ function suggest($type) {
     return $out;
 }
 
+function match($testvalues, $matchvalues) {
+    if(!is_array($testvalues)) {
+        $testvalues = array($testvalues);
+    }
+    foreach($testvalues as $value) {
+        foreach($matchvalues as $candidate) {
+            if(fnmatch($value, $candidate, FNM_CASEFOLD)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 class Product {
     private $id = 0;
     private $name = '';
@@ -228,60 +242,30 @@ class Product {
     }
 
     public function matches($terms) {
-        foreach($terms as $fieldtype => $values) {
-            $testfield = null;
-            switch($fieldtype) {
-                case 'tag':
-                    foreach($values as $value) {
-                        if(!in_array($value, $this->tags)) {
-                            return false;
-                        }
-                    }
-                    break;
-                case 'status':
-                    $loan = $this->get_active_loan();
-                    foreach($values as $value) {
-                        switch($value) {
-                            case 'on_loan':
-                                if(!$loan) {
-                                    return false;
-                                }
-                                break;
-                            case 'no_loan':
-                                if($loan) {
-                                    return false;
-                                }
-                                break;
-                            case 'overdue':
-                                if(!$loan || !$loan->is_overdue()) {
-                                    return false;
-                                }
-                                break;
-                            default:
-                                return false;
-                        }
-                    }
-                    break;
-                case 'words':
-                    $testfield = $this->name;
-                    break;
-                default:
-                    if(property_exists($this, $fieldtype)) {
-                        $testfield = $this->$fieldtype;
-                    } elseif(array_key_exists($fieldtype, $this->info)) {
-                        $tesfield = $this->info[$fieldtype];
-                    } else {
-                        return false;
-                    }
-                    break;
-            }
-            if($testfield !== null) {
-                foreach($values as $value) {
-                    $test = strtolower($testfield);
-                    if(strpos($test, $value) === false) {
-                        return false;
-                    }
+        foreach($terms as $field => $values) {
+            $matchvalues = array();
+            if(property_exists($this, $field)) {
+                $matchvalues[] = $this->$field;
+            } else if(array_key_exists($field, $this->get_info())) {
+                $matchvalues[] = $this->get_info()[$field];
+            } else {
+                switch($field) {
+                    case 'tag':
+                        $matchvalues = $this->get_tags();
+                    case 'status':
+                        $matchvalues[] = $this->get_loan_status();
+                    case 'fritext':
+                        $matchvalues[] = $this->name;
+                        $matchvalues[] = $this->serial;
+                        $matchvalues[] = $this->invoice;
+                        $matchvalues = array_merge($matchvalues,
+                                                   $this->get_tags(),
+                                                   array_values(
+                                                       $this->get_info()));
                 }
+            }
+            if(!match($values, $matchvalues)) {
+                return false;
             }
         }
         return true;
@@ -425,6 +409,20 @@ class Product {
         execute($update);
         $this->update_tags();
         return true;
+    }
+
+    public function get_loan_status() {
+        if($this->get_discardtime(false)) {
+            return 'discarded';
+        }
+        $loan = $this->get_active_loan();
+        if(!$loan) {
+            return 'no_loan';
+        }
+        if($loan->is_overdue()) {
+            return 'overdue';
+        }
+        return 'on_loan';
     }
 
     public function get_active_loan() {
@@ -694,35 +692,27 @@ class User {
     }
 
     public function matches($terms) {
-        foreach($terms as $fieldtype => $values) {
-            switch($fieldtype) {
-                case 'words':
-                    foreach($values as $value) {
-                        if(strpos($this->name, $value) !== false) {
-                            continue;
-                        }
-                        $name = strtolower($this->get_displayname());
-                        if(strpos($name, $value) !== false) {
-                            continue;
-                        }
-                        return false;
-                    }
-                    break;
-                default:
-                    if(!property_exists($this, $fieldtype)) {
-                        return false;
-                    }
-                    foreach($values as $value) {
-                        if($this->$fieldtype != $value) {
-                            return false;
-                        }
-                    }
-                    break;
+        foreach($terms as $field => $values) {
+            $matchvalues = array();
+            if($field == 'name') {
+                $matchvalues[] = $this->name;
+                $matchvalues[] = $this->get_displayname();
+            } else if(property_exists($this, $field)) {
+                $matchvalues[] = $this->$field;
+            } else if($field == 'fritext') {
+                $matchvalues[] = $this->name;
+                $matchvalues[] = $this->get_displayname();
+                $matchvalues[] = $this->notes;
+            } else {
+                return false;
+            }
+            if(!match($values, $matchvalues)) {
+                return false;
             }
         }
         return true;
     }
-    
+
     public function get_displayname() {
         global $ldap;
         try {

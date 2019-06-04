@@ -32,6 +32,28 @@ abstract class Responder {
     public function __construct() {
         $this->fragments = get_fragments('./html/fragments.html');
     }
+
+    final protected function escape_tags($tags) {
+        foreach($tags as $key => $tag) {
+            $tags[$key] = str_replace(array("'",
+                                            '"'),
+                                      array('&#39;',
+                                            '&#34;'),
+                                      strtolower($tag));
+        }
+        return $tags;
+    }
+    
+    final protected function unescape_tags($tags) {
+        foreach($tags as $key => $tag) {
+            $tags[$key] = str_replace(array('&#39;',
+                                            '&#34;'),
+                                      array("'",
+                                            '"'),
+                                      strtolower($tag));
+        }
+        return $tags;
+    }
 }
 
 abstract class Page extends Responder {
@@ -46,7 +68,8 @@ abstract class Page extends Responder {
                                  'products' => 'Artiklar',
                                  'users' => 'Låntagare',
                                  'inventory' => 'Inventera',
-                                 'history' => 'Historik');
+                                 'history' => 'Historik',
+                                 'search' => 'Sök');
     private $template_parts = array();
     
     public function __construct() {
@@ -94,12 +117,17 @@ abstract class Page extends Responder {
     private function build_menu() {
         $menu = '';
         foreach($this->menuitems as $page => $title) {
+            $align = 'left';
             $active = '';
             if($this->page == $page) {
                 $active = 'active';
             }
+            if($page == 'search') {
+                $align = 'right';
+            }
             $menu .= replace(array('title' => $title,
                                    'page' => $page,
+                                   'align' => $align,
                                    'active' => $active),
                              $this->template_parts['menuitem']);
         }
@@ -334,121 +362,152 @@ abstract class Page extends Responder {
 }
 
 class SearchPage extends Page {
-    private $querystr = '';
     private $terms = array();
     
     public function __construct() {
         parent::__construct();
-        $this->subtitle = 'Sökresultat för ';
-        if(isset($_GET['q'])) {
-            $this->querystr = $_GET['q'];
-            $this->subtitle .= "'$this->querystr'";
-            $orterms = preg_split('/[[:space:]]+or[[:space:]]+/',
-                                  strtolower($this->querystr),
-                                  -1,
-                                  PREG_SPLIT_NO_EMPTY);
-            foreach($orterms as $orterm) {
-                $searchpart = array();
-                $terms = preg_split('/[[:space:]]+/',
-                                    $orterm,
-                                    -1,
-                                    PREG_SPLIT_NO_EMPTY);
-                foreach($terms as $term) {
-                    $key = '';
-                    $value = '';
-                    if(strpos($term, ':') !== false) {
-                        $pair = explode(':', $term);
-                        $key = $pair[0];
-                        switch($key) {
-                            case 'namn':
-                                $key = 'name';
-                                break;
-                            case 'fakturanummer':
-                                $key = 'invoice';
-                                break;
-                            case 'serienummer':
-                                $key = 'serial';
-                                break;
-                            case 'anteckningar':
-                                $key = 'notes';
-                                break;
-                        }
-                        $value = $pair[1];
-                        if($key == 'status') {
-                            switch($value) {
-                                case 'inne':
-                                    $value = 'no_loan';
-                                    break;
-                                case 'ute':
-                                case 'utlånad':
-                                    $value = 'on_loan';
-                                    break;
-                                case 'sen':
-                                case 'försenad':
-                                case 'försenat':
-                                    $value = 'overdue';
-                                    break;
-                            }
-                        }
-                    } else {
-                        $key = 'words';
-                        $value = $term;
-                    }
-                    if(!isset($searchpart[$key])) {
-                        $searchpart[$key] = array();
-                    }
-                    $searchpart[$key][] = $value;
-                }
-                $this->terms[] = $searchpart;
-            }
-        }
+        $this->terms = $_GET;
+        unset($this->terms['q'], $this->terms['page']);
     }
     
     private function do_search() {
-        $out = array('users' => array(),
-                     'products' => array());
-        if(!$this->querystr) {
+        $out = array();
+        if(!$this->terms) {
             return $out;
         }
-        $out['users'] = $this->search('user');
-        $out['products'] = $this->search('product');
+        $terms = $this->translate_keys($this->terms);
+        foreach(array('user', 'product') as $type) {
+            $result = $this->search($type, $terms);
+            if($result) {
+                $out[$type] = $result;
+            }
+        }
         return $out;
     }
 
-    private function search($type) {
+    private function translate_keys($terms) {
+        $translated = array();
+        foreach($terms as $key => $value) {
+            $newkey = $key;
+            switch($key) {
+                case 'namn':
+                    $newkey = 'name';
+                    break;
+                case 'faktura':
+                case 'fakturanummer':
+                    $newkey = 'invoice';
+                    break;
+                case 'serienummer':
+                    $newkey = 'serial';
+                    break;
+                case 'tagg':
+                    $newkey = 'tag';
+                    break;
+                case 'status':
+                    $value = $this->translate_values($value);
+                    break;
+            }
+            if(!array_key_exists($newkey, $translated)) {
+                $translated[$newkey] = $value;
+            } else {
+                $temp = $translated[$newkey];
+                $translated[$newkey] = array_merge((array)$temp, (array)$value);
+            }
+        }
+        return $translated;
+    }
+
+    private function translate_values($value) {
+        if(!is_array($value)) {
+            $value = array($value);
+        }
+        $translated = array();
+        foreach($value as $item) {
+            $newitem = $item;
+            switch($item) {
+                case 'ute':
+                case 'utlånad':
+                case 'utlånat':
+                case 'lånad':
+                case 'lånat':
+                    $newitem = 'on_loan';
+                    break;
+                case 'inne':
+                case 'ledig':
+                case 'ledigt':
+                case 'tillgänglig':
+                case 'tillgängligt':
+                    $newitem = 'no_loan';
+                    break;
+                case 'sen':
+                case 'sent':
+                case 'försenad':
+                case 'försenat':
+                case 'överdraget':
+                    $newitem = 'overdue';
+                    break;
+                case 'skrotad':
+                case 'skrotat':
+                case 'slängd':
+                case 'slängt':
+                    $newitem = 'discarded';
+                    break;
+            }
+            $translated[] = $newitem;
+        }
+        return $translated;
+    }
+
+    private function search($type, $terms) {
         $items = get_items($type);
         $out = array();
         foreach($items as $item) {
-            foreach($this->terms as $term) {
-                if($item->matches($term)) {
-                    $out[] = $item;
-                }
+            if($item->matches($terms)) {
+                $out[] = $item;
             }
         }
         return $out;
     }
     
     protected function render_body() {
-        $hits = $this->do_search();
-        $nohits = true;
-        if($hits['users']) {
-            print(replace(array('title' => 'Låntagare'),
-                          $this->fragments['subtitle']));
-            print($this->build_user_table($hits['users']));
-            $nohits = false;
+        $terms = '';
+        foreach($this->terms as $key => $value) {
+            if(!is_array($value)) {
+                $terms .= replace(array('term' => ucfirst($key).": $value",
+                                        'key' => $key,
+                                        'value' => $value),
+                                  $this->fragments['search_term']);
+            } else {
+                foreach($value as $item) {
+                    $terms .= replace(array('term' => ucfirst($key).": $item",
+                                            'key' => $key,
+                                            'value' => $item),
+                                      $this->fragments['search_term']);
+                }
+            }
         }
-        if($hits['products']) {
-            print(replace(array('title' => 'Artiklar'),
-                          $this->fragments['subtitle']));
-            print($this->build_product_table($hits['products']));
-            $nohits = false;
+        print(replace(array('terms' => $terms),
+                      $this->fragments['search_form']));
+        if($this->terms) {
+            $hits = $this->do_search();
+            print(replace(array('title' => 'Sökresultat'),
+                          $this->fragments['title']));
+            $result = '';
+            if(isset($hits['user'])) {
+                $result = replace(array('title' => 'Låntagare'),
+                                  $this->fragments['subtitle']);
+                $result .= $this->build_user_table($hits['user']);
+            }
+            if(isset($hits['product'])) {
+                $result .= replace(array('title' => 'Artiklar'),
+                                   $this->fragments['subtitle']);
+                $result .= $this->build_product_table($hits['product']);
+            }
+            if(!$result) {
+                $result = 'Inga träffar.';
+            }
+            print($result);
         }
-        if($nohits) {
-            print('Inga träffar.');
-        }
-        print(replace(array('title' => 'Hjälp'),
-                      $this->fragments['subtitle']));
-        print($this->fragments['search_help']);
     }
 }
 
@@ -522,7 +581,7 @@ class ProductPage extends Page {
                              $this->fragments['info_item']);
         }
         $tags = '';
-        foreach($this->product->get_tags() as $tag) {
+        foreach($this->escape_tags($this->product->get_tags()) as $tag) {
             $tags .= replace(array('tag' => ucfirst($tag)),
                              $this->fragments['tag']);
         }
@@ -962,8 +1021,8 @@ class Ajax extends Responder {
         $name = $info['name'];
         $serial = $info['serial'];
         $invoice = $info['invoice'];
-        $tags = $this->extract_tags($info['tags']);
-        foreach(array('id', 'name', 'serial', 'invoice', 'tags') as $key) {
+        $tags = $this->unescape_tags($info['tag']);
+        foreach(array('id', 'name', 'serial', 'invoice', 'tag') as $key) {
             unset($info[$key]);
         }
         if(!$name) {
@@ -1062,7 +1121,7 @@ class Ajax extends Responder {
     private function save_template() {
         $info = $_POST;
         $name = $info['template'];
-        $tags = $this->extract_tags($info['tags']);
+        $tags = $this->unescape_tags($info['tag']);
         foreach(array('template',
                       'id',
                       'name',
@@ -1136,21 +1195,6 @@ class Ajax extends Responder {
         } else {
             return new Failure('Artikeln är redan skrotad.');
         }
-    }
-
-    private function extract_tags($string) {
-        $tags = explode(',', strtolower($string));
-        # Unescape specials
-        foreach($tags as $key => $tag) {
-            $tags[$key] = str_replace(array('&#44;',
-                                            '&#39;',
-                                            '&#34;'),
-                                      array(',',
-                                            "'",
-                                            '"'),
-                                      $tag);
-        }
-        return $tags;
     }
 }
 

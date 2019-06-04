@@ -261,8 +261,10 @@
 
 ¤¤ tag ¤¤
 <p>
-  <span class="tag"
-        data-name="¤tag¤">
+  <span class="tag">
+    <input type="hidden"
+           name="tag[]"
+           value="¤tag¤" />
     ¤tag¤
     <a class="tagremove"
        onClick="JavaScript:removeTag(event)">
@@ -578,55 +580,41 @@
   </td>
 </tr>
 
-¤¤ search_help ¤¤
-<p>
-  Sökfunktionen matchar normalt på låntagares namn och användarnamn,
-  samt artiklars namn. Alla ord måste matcha för att generera en
-  träff. Flera sökningar kan kombineras mha nyckelordet 'or'.
+¤¤ search_form ¤¤
+
+<form onSubmit="JavaScript:doSearch(event)"
+      id="search"
+      class="dark">
+  <p>
+    <input type="hidden"
+           name="page"
+           value="search" />
+    <input type="text"
+           onKeyPress="JavaScript:searchInput(event)"
+           name="q"
+           placeholder="Vad letar du efter?"
+           value="" />
+    <button type="submit">
+      Sök
+    </button>
+  </p>
+  <div id="terms">
+    ¤terms¤
+  </div>
+  <div class="clear"></div>
+</form>
+
+¤¤ search_term ¤¤
+
+<p class="left">
+  <span class="term">
+    <input type="hidden"
+           name="¤key¤"
+           value="¤value¤" />
+    ¤term¤
+    <a class="termremove"
+       onClick="JavaScript:removeTerm(event)">
+      x
+    </a>
+  </span>
 </p>
-<p>
-  Övriga fält är sökbara med syntaxen [fält]:[värde]. Saknas [värde]
-  så returneras alla träffar som överhuvud taget har fältet.
-</p>
-<p>
-  Alla sökningar matchar på delar av ord, utom taggar som bara matchas exakt.
-</p>
-<p>
-  De fält som alltid finns är:
-  <ul>
-    <li>
-      <strong>Artikel:</strong> id, namn, serienummer, fakturanummer, status<br/>
-      Giltiga värden för status är: inne, ute, utlånad, sen, försenad
-    </li>
-    <li>
-      <strong>Låntagare:</strong> id, namn, användarnamn, anteckningar
-    </li>
-  </ul>
-  Artiklar kan ha fler fält beroende på vad som lagts till.
-</p>
-<h3>Lite exempel:</h3>
-<ul>
-  <li>
-    <strong>"mac"</strong>
-    - sök efter artiklar och låntagare vars namn eller användarnamn
-    innehåller strängen 'mac'
-  </li>
-  <li>
-    <strong>"tag:trasig"</strong>
-    - sök efter artiklar med taggen "trasig"<br/>
-    (Det är bara artiklar som kan ha taggar)
-  </li>
-  <li>
-    <strong>"anteckning:"</strong>
-    - sök efter artiklar som har ett fält vid namn "anteckning"<br/>
-    (Anteckningsfältet för låntagare heter 'anteckningar', så bara
-    artiklar kommer hittas)
-  </li>
-  <li>
-    <strong>"mac or tag:trasig"</strong>
-    - sök efter artiklar och låntagare som matchar "mac", samt
-    artiklar som har taggen "trasig"<br/>
-    (Bara artiklar kan ha taggar, men eftersom 'mac' är fritext så
-    kan den matcha både artiklar och låntagare)
-  </li>
-</ul>
