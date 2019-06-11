@@ -10,7 +10,7 @@ class QR extends Responder {
     }
 
     public function render() {
-        if(class_exists('QRcode', false)) {
+        if(class_exists('QRcode')) {
             QRcode::svg((string)$this->product->get_serial());
         }
     }

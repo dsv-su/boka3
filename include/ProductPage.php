@@ -80,7 +80,7 @@ class ProductPage extends Page {
                         'tags' => $tags,
                         'info' => $info);
         $label = '';
-        if(class_exists('QRcode', false)) {
+        if(class_exists('QRcode')) {
             $label = replace($fields, $this->fragments['product_label']);
         }
         $fields['label'] = $label;
