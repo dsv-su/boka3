@@ -371,8 +371,11 @@ class SearchPage extends Page {
     
     public function __construct() {
         parent::__construct();
-        $this->terms = $_GET;
-        unset($this->terms['q'], $this->terms['page']);
+        unset($_GET['page']);
+        if(isset($_GET['q']) && !$_GET['q']) {
+            unset($_GET['q']);
+        }
+        $this->terms = $this->translate_keys($_GET);
     }
     
     private function do_search() {
@@ -380,9 +383,8 @@ class SearchPage extends Page {
         if(!$this->terms) {
             return $out;
         }
-        $terms = $this->translate_keys($this->terms);
         foreach(array('user', 'product') as $type) {
-            $result = $this->search($type, $terms);
+            $result = $this->search($type, $this->terms);
             if($result) {
                 $out[$type] = $result;
             }
@@ -395,6 +397,9 @@ class SearchPage extends Page {
         foreach($terms as $key => $value) {
             $newkey = $key;
             switch($key) {
+                case 'q':
+                    $newkey = 'fritext';
+                    break;
                 case 'namn':
                     $newkey = 'name';
                     break;
