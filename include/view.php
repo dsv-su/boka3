@@ -1139,7 +1139,10 @@ class Ajax extends Responder {
     private function save_template() {
         $info = $_POST;
         $name = $info['template'];
-        $tags = $this->unescape_tags($info['tag']);
+        $tags = array();
+        if(isset($info['tag'])) {
+            $tags = $this->unescape_tags($info['tag']);
+        }
         foreach(array('template',
                       'id',
                       'name',
