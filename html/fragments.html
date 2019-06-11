@@ -139,7 +139,8 @@
 ¤¤ product_details ¤¤
 <h2>Artikeldata</h2>
 <form id="productdata"
-      onSubmit="JavaScript:saveProduct(event)">
+      onSubmit="JavaScript:saveProduct(event)"
+      class="left">
   <input type="hidden"
          name="id"
          value="¤id¤" />
@@ -235,6 +236,34 @@
     </tbody>
   </table>
 </form>
+¤label¤
+<div class="clear"></div>
+
+¤¤ product_label ¤¤
+<div class="qr left">
+  <a href="./?page=print&id=¤id¤"
+     title="Skriv ut">
+    <span>¤name¤</span>
+    <img src="./?page=qr&id=¤id¤">
+    <span>¤serial¤</span>
+  </a>
+</div>
+
+¤¤ label_page ¤¤
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="shortcut icon" href="images/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" type="text/css" href="./template.css" />
+    <link rel="stylesheet" type="text/css" href="./style.css" />
+    <title>¤title¤</title>
+  </head>
+  <body>
+    ¤label¤
+  </body>
+</html>
 
 ¤¤ discard_button ¤¤
 <form>
@@ -455,7 +484,8 @@
   <input type="text"
          name="product"
          placeholder="Serienummer"
-         required />
+         required
+         ¤disabled¤ />
   <button>
       Låna ut
   </button>
@@ -465,7 +495,8 @@
          id="end"
          onClick="JavaScript:calendar(event)"
          name="end"
-         value="¤end¤" />
+         value="¤end¤"
+         ¤disabled¤ />
 </form>
 ¤subtitle¤
 ¤loan_table¤

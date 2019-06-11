@@ -3,6 +3,7 @@
 require_once('./include/db.php');
 require_once('./include/ldap.php');
 require_once('./include/functions.php');
+include_once('./phpqrcode/qrlib.php');
 
 function make_page($page) {
     switch($page) {
@@ -23,6 +24,10 @@ function make_page($page) {
             return new HistoryPage();
         case 'ajax':
             return new Ajax();
+        case 'qr':
+            return new QR();
+        case 'print':
+            return new Printer();
     }
 }
 
@@ -585,13 +590,18 @@ class ProductPage extends Page {
             $tags .= replace(array('tag' => ucfirst($tag)),
                              $this->fragments['tag']);
         }
-        $out = replace(array('id' => $this->product->get_id(),
-                             'name' => $this->product->get_name(),
-                             'serial' => $this->product->get_serial(),
-                             'invoice' => $this->product->get_invoice(),
-                             'tags' => $tags,
-                             'info' => $info),
-                       $this->fragments['product_details']);
+        $fields = array('id' => $this->product->get_id(),
+                        'name' => $this->product->get_name(),
+                        'serial' => $this->product->get_serial(),
+                        'invoice' => $this->product->get_invoice(),
+                        'tags' => $tags,
+                        'info' => $info);
+        $label = '';
+        if(class_exists('QRcode', false)) {
+            $label = replace($fields, $this->fragments['product_label']);
+        }
+        $fields['label'] = $label;
+        $out = replace($fields, $this->fragments['product_details']);
         if(!$this->product->get_discardtime()) {
             $out .= replace(array('id' => $this->product->get_id()),
                             $this->fragments['discard_button']);
@@ -631,7 +641,8 @@ class ProductPage extends Page {
                               'serial' => '',
                               'invoice' => '',
                               'tags' => $tags,
-                              'info' => $fields),
+                              'info' => $fields,
+                              'label' => ''),
                         $this->fragments['product_details']);
         return $out;
     }
@@ -731,11 +742,14 @@ class CheckoutPage extends Page {
         $notes = '';
         $loan_table = '';
         $subhead = '';
-        $enddate = gmdate('Y-m-d', time() + 604800); # 1 week from now
+        $enddate = '';
+        $disabled = 'disabled';
         if($this->user !== null) {
             $username = $this->user->get_name();
             $displayname = $this->user->get_displayname();
             $notes = $this->user->get_notes();
+            $enddate = gmdate('Y-m-d', time() + 604800); # 1 week from now
+            $disabled = '';
             $loans = $this->user->get_loans('active');
             $loan_table = 'Inga pågående lån.';
             if($loans) {
@@ -749,6 +763,7 @@ class CheckoutPage extends Page {
                             'notes' => $notes,
                             'end' => $enddate,
                             'subtitle' => $subhead,
+                            'disabled' => $disabled,
                             'loan_table' => $loan_table),
                       $this->fragments['checkout_page']));
     }
@@ -1021,7 +1036,10 @@ class Ajax extends Responder {
         $name = $info['name'];
         $serial = $info['serial'];
         $invoice = $info['invoice'];
-        $tags = $this->unescape_tags($info['tag']);
+        $tags = array();
+        if(isset($info['tag'])) {
+            $tags = $this->unescape_tags($info['tag']);
+        }
         foreach(array('id', 'name', 'serial', 'invoice', 'tag') as $key) {
             unset($info[$key]);
         }
@@ -1195,6 +1213,40 @@ class Ajax extends Responder {
         } else {
             return new Failure('Artikeln är redan skrotad.');
         }
+    }
+}
+
+class QR extends Responder {
+    protected $product = '';
+
+    public function __construct() {
+        parent::__construct();
+        if(isset($_GET['id'])) {
+            $this->product = new Product($_GET['id']);
+        }
+    }
+
+    public function render() {
+        if(class_exists('QRcode', false)) {
+            QRcode::svg((string)$this->product->get_serial());
+        }
+    }
+}
+
+class Printer extends QR {
+    public function __construct() {
+        parent::__construct();
+    }
+    
+    public function render() {
+        $label = replace(array('id' => $this->product->get_id(),
+                               'name' => $this->product->get_name(),
+                               'serial' => $this->product->get_serial()),
+                         $this->fragments['product_label']);
+        $title = 'Etikett för artikel '.$this->product->get_serial();
+        print(replace(array('title' => $title,
+                            'label' => $label),
+                      $this->fragments['label_page']));
     }
 }
 

@@ -135,3 +135,28 @@ input[type="text"].newtemplate {
     margin: 5px;
     padding-left: 2px;
 }
+
+.qr {
+    margin: 0 10px;
+    padding: 5px;
+    border: 1px solid black;
+    font-weight: bold;
+    text-align: center;
+    font-size: 120%;
+}
+
+@media print {
+    .qr {
+        border: none;
+    }
+}
+
+.qr > a:link, .qr > a:visited {
+    color: black;
+    text-decoration: none;
+}
+
+.qr > a > * {
+    display: block;
+    margin: 0 auto;
+}
