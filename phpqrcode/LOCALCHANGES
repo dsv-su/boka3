@@ -1,0 +1,11 @@
+The following files have been removed compared to the version
+available at https://github.com/t0k4rt/phpqrcode. No other
+changes have been made.
+
+.git/*
+bindings/*
+temp/*
+tools/*
+.gitignore
+index.php
+phpqrcode.php
