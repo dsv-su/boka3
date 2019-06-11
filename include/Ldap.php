@@ -1,5 +1,4 @@
 <?php
-
 class Ldap {
     private $conn;
     private $base_dn = "dc=su,dc=se";
@@ -42,6 +41,4 @@ class Ldap {
         return $out;
     }
 }
-
-$ldap = new Ldap();
 ?>
