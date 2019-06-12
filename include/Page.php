@@ -135,14 +135,19 @@ abstract class Page extends Responder {
                                       'page' => 'products'),
                                 $this->fragments['item_link']);
             $available = 'Tillgänglig';
-            $status = 'available';
-            $discarded = $product->get_discardtime();
-            if($discarded) {
-                $available = 'Skrotad '.$discarded;
-                $status = 'discarded';
-            } else {
-                $loan = $product->get_active_loan();
-                if($loan) {
+            $status = $product->get_status();
+            switch($status) {
+                case 'discarded':
+                    $available = 'Skrotad '.$discarded;
+                    break;
+                case 'service':
+                    $service = $product->get_active_service();
+                    $available = 'På service sedan '
+                                .$service->get_duration()['start'];
+                    break;
+                case 'on_loan':
+                case 'overdue':
+                    $loan = $product->get_active_loan();
                     $user = $loan->get_user();
                     $userlink = replace(array('name' => $user->get_displayname(),
                                               'id' => $user->get_id(),
@@ -150,13 +155,11 @@ abstract class Page extends Responder {
                                         $this->fragments['item_link']);
                     $available = 'Utlånad till '.$userlink;
                     if($loan->is_overdue()) {
-                        $status = 'overdue';
                         $available .= ', försenad';
                     } else {
-                        $status = 'on_loan';
                         $available .= ', åter '.$loan->get_duration()['end'];
                     }
-                }
+                    break;
             }
             $rows .= replace(array('available' => $available,
                                    'serial' => $product->get_serial(),
@@ -194,7 +197,6 @@ abstract class Page extends Responder {
                                       'name' => $product->get_name(),
                                       'page' => 'products'),
                                 $this->fragments['item_link']);
-            $available = '';
             $duration = $loan->get_duration();
             $status = 'on_loan';
             if($loan->is_overdue()) {
@@ -222,41 +224,45 @@ abstract class Page extends Responder {
                        $this->fragments['loan_table']);
     }
 
-    final protected function build_product_loan_table($loans) {
+    final protected function build_product_history_table($history) {
         $rows = '';
         $renew_column_visible = 'hidden';
-        foreach($loans as $loan) {
-            $user = $loan->get_user();
-            $product = $loan->get_product();
-            $userlink = replace(array('id' => $user->get_id(),
-                                      'name' => $user->get_name(),
-                                      'page' => 'users'),
-                                $this->fragments['item_link']);
-            $available = '';
-            $duration = $loan->get_duration();
-            $status = 'on_loan';
-            if($loan->is_overdue()) {
-                $status = 'overdue';
+        foreach($history as $event) {
+            $duration = $event->get_duration();
+            $product = $event->get_product();
+            $fields = array('item_link' => 'Service',
+                            'start_date' => $duration['start'],
+                            'end_date' => $duration['end'],
+                            'return_date' => $duration['return'],
+                            'status' => 'available',
+                            'vis_renew' => $renew_column_visible,
+                            'vis_renew_button' => 'hidden',
+                            'vis_return' => '',
+                            'id' => $product->get_id(),
+                            'end_new' => '');
+            if($event instanceof Loan) {
+                $user = $event->get_user();
+                $id = $user->get_id();
+                $name = $user->get_name();
+                $fields['item_link'] = replace(array('id' => $id,
+                                                     'name' => $name,
+                                                     'page' => 'users'),
+                                               $this->fragments['item_link']);
+                $fields['end_new'] = $duration['end_renew'];
+                if($event->is_active()) {
+                    $fields['vis_renew_button'] = '';
+                    $fields['vis_renew'] = '';
+                    $renew_column_visible = '';
+                    if($event->is_overdue()) {
+                        $fields['status'] = 'overdue';
+                    } else {
+                        $fields['status'] = 'on_loan';
+                    }
+                }
+            } else if ($event instanceof Service) {
+                $fields['status'] = 'service';
             }
-            $returndate = '';
-            $renew_visible = '';
-            if($duration['return']) {
-                $returndate = $duration['return'];
-                $renew_visible = 'hidden';
-            } else {
-                $renew_column_visible = '';
-            }
-            $rows .= replace(array('item_link' => $userlink,
-                                   'start_date' => $duration['start'],
-                                   'end_date' => $duration['end'],
-                                   'return_date' => $returndate,
-                                   'status' => $status,
-                                   'vis_renew' => $renew_column_visible,
-                                   'vis_renew_button' => $renew_visible,
-                                   'vis_return' => '',
-                                   'id' => $product->get_id(),
-                                   'end_new' => $duration['end_renew']),
-                             $this->fragments['loan_row']);
+            $rows .= replace($fields, $this->fragments['loan_row']);
         }
         return replace(array('rows' => $rows,
                              'vis_renew' => $renew_column_visible,

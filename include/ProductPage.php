@@ -78,25 +78,29 @@ class ProductPage extends Page {
                         'serial' => $this->product->get_serial(),
                         'invoice' => $this->product->get_invoice(),
                         'tags' => $tags,
-                        'info' => $info);
-        $label = '';
+                        'info' => $info,
+                        'label' => '',
+                        'hidden' => 'hidden',
+                        'service' => 'Starta service');
         if(class_exists('QRcode')) {
-            $label = replace($fields, $this->fragments['product_label']);
+            $fields['label'] = replace($fields,
+                                       $this->fragments['product_label']);
         }
-        $fields['label'] = $label;
-        $out = replace($fields, $this->fragments['product_details']);
         if(!$this->product->get_discardtime()) {
-            $out .= replace(array('id' => $this->product->get_id()),
-                            $this->fragments['discard_button']);
+            $fields['hidden'] = '';
+            if($this->product->get_status() == 'service') {
+                $fields['service'] = 'Avsluta service';
+            }
         }
-        $out .= replace(array('title' => 'Lånehistorik'),
+        $out = replace($fields, $this->fragments['product_details']);
+        $out .= replace(array('title' => 'Artikelhistorik'),
                         $this->fragments['subtitle']);
-        $loan_table = 'Inga lån att visa.';
-        $history = $this->product->get_loan_history();
+        $history_table = 'Ingen historik att visa.';
+        $history = $this->product->get_history();
         if($history) {
-            $loan_table = $this->build_product_loan_table($history);
+            $history_table = $this->build_product_history_table($history);
         }
-        $out .= $loan_table;
+        $out .= $history_table;
         return $out;
     }
 

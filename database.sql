@@ -89,6 +89,17 @@ create table `loan` (
 ) character set utf8mb4,
   collate utf8mb4_unicode_ci;
 
+create table `service` (
+  `id` bigint(20) not null auto_increment,
+  primary key(`id`),
+  `product` bigint(20) not null,
+  constraint `s_f_product`
+    foreign key(`product`) references `product`(`id`),
+  `starttime` bigint(20) not null,
+  `returntime` bigint(20) default null
+) character set utf8mb4,
+  collate utf8mb4_unicode_ci;
+
 create table `inventory` (
   `id` bigint(20) not null auto_increment,
   primary key(`id`),

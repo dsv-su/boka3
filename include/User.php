@@ -148,29 +148,5 @@ class User {
         }
         return $overdue;
     }
-    
-    public function create_loan($product, $endtime) {
-        $find = prepare('select * from `loan`
-                         where `product`=? and `returntime` is null');
-        $prod_id = $product->get_id();
-        bind($find, 'i', $prod_id);
-        execute($find);
-        $loan = result_single($find);
-        if($loan !== null) {
-            $loan_id = $loan['id'];
-            throw new Exception(
-                "Product $prod_id has an active loan (id $loan_id) already.");
-        }
-        $now = time();
-        $insert = prepare('insert into
-                               `loan`(`user`, `product`, `starttime`, `endtime`)
-                               values (?, ?, ?, ?)');
-        bind($insert, 'iiii',
-             $this->id, $prod_id,
-             $now, strtotime($endtime . ' 13:00'));
-        execute($insert);
-        $loan_id = $insert->insert_id;
-        return new Loan($loan_id);
-    }
 }
 ?>

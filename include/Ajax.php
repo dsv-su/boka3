@@ -54,6 +54,8 @@ class Ajax extends Responder {
             case 'discardproduct':
                 $out = $this->discard_product();
                 break;
+            case 'toggleservice':
+                $out = $this->toggle_service();
         }
         print($out->toJson());
     }
@@ -67,7 +69,12 @@ class Ajax extends Responder {
     }
 
     private function checkout_product() {
-        $user = new User($_POST['user'], 'name');
+        $user = null;
+        try {
+            $user = new User($_POST['user'], 'name');
+        } catch(Exception $e) {
+            return new Failure('Ogiltigt användar-id.');
+        }
         $product = null;
         try {
             $product = new Product($_POST['product'], 'serial');
@@ -75,7 +82,7 @@ class Ajax extends Responder {
             return new Failure('Ogiltigt serienummer.');
         }
         try {
-            $user->create_loan($product, $_POST['end']);
+            Loan::create_loan($user, $product, $_POST['end']);
             return new Success($product->get_name() . 'utlånad.');
         } catch(Exception $e) {
             return new Failure('Artikeln är redan utlånad.');
@@ -343,6 +350,17 @@ class Ajax extends Responder {
             return new Success('Artikeln skrotad.');
         } else {
             return new Failure('Artikeln är redan skrotad.');
+        }
+    }
+
+    private function toggle_service() {
+        $product = new Product($_POST['id']);
+        try {
+            $product->toggle_service();
+            return new Success('Service-status uppdaterad.');
+        } catch(Exception $e) {
+            return new Failure('Service kan inte registreras '
+                              .'på den här artikeln nu.');
         }
     }
 }

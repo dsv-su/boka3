@@ -434,6 +434,19 @@ function discardProduct(event) {
     ajaxRequest('discardproduct', dataListFromForm(form), render)
 }
 
+function toggleService(event) {
+    event.preventDefault()
+    var form = event.currentTarget.parentNode
+    var render = function(result) {
+        if(result.type == 'success') {
+            window.location.reload(false)
+        } else {
+            showResult(result)
+        }
+    }
+    ajaxRequest('toggleservice', dataListFromForm(form), render)
+}
+
 function searchInput(event) {
     if(event.key != "Enter") {
         return

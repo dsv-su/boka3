@@ -80,7 +80,7 @@ class SearchPage extends Page {
                 case 'ledigt':
                 case 'tillgänglig':
                 case 'tillgängligt':
-                    $newitem = 'no_loan';
+                    $newitem = 'available';
                     break;
                 case 'sen':
                 case 'sent':
@@ -94,6 +94,10 @@ class SearchPage extends Page {
                 case 'slängd':
                 case 'slängt':
                     $newitem = 'discarded';
+                    break;
+                case 'lagning':
+                case 'reparation':
+                    $newitem = 'service';
                     break;
             }
             $translated[] = $newitem;

@@ -9,13 +9,11 @@ class Product {
     private $info = array();
     private $tags = array();
     
-    public static function create_product(
-        $name = '',
-        $invoice = '',
-        $serial = '',
-        $info = array(),
-        $tags = array()
-    ) {
+    public static function create_product($name = '',
+                                          $invoice = '',
+                                          $serial = '',
+                                          $info = array(),
+                                          $tags = array()) {
         $now = time();
         begin_trans();
         try {
@@ -59,7 +57,7 @@ class Product {
         execute($search);
         $result = result_single($search);
         if($result === null) {
-            throw new Exception('Product does not exist..');
+            throw new Exception('Product does not exist.');
         }
         $this->id = $result['id'];
         $this->update_fields();
@@ -118,7 +116,7 @@ class Product {
                     case 'tag':
                         $matchvalues = $this->get_tags();
                     case 'status':
-                        $matchvalues[] = $this->get_loan_status();
+                        $matchvalues[] = $this->get_status();
                     case 'fritext':
                         $matchvalues[] = $this->name;
                         $matchvalues[] = $this->serial;
@@ -152,12 +150,42 @@ class Product {
     }
 
     public function discard() {
+        if($this->get_status() != 'available') {
+            return false;
+        }
         $now = time();
         $update = prepare('update `product` set `discardtime`=? where `id`=?');
         bind($update, 'ii', $now, $this->id);
         execute($update);
         $this->discardtime = $now;
         return true;
+    }
+    
+    public function toggle_service() {
+        $status = $this->get_status();
+        $now = time();
+        $update = '';
+        if($status == 'service') {
+            return $this->get_active_service()->end();
+        } else if($status == 'available') {
+            Service::create_service($this);
+            return true;
+        }
+        $id = $this->get_id();
+        throw new Exception("The state ($status) of this product (id $id) "
+                           ."does not allow servicing.");
+    }
+
+    public function get_active_service() {
+        $find = prepare('select `id` from `service`'
+                       .'where `returntime` is null and product=?');
+        bind($find, 'i', $this->id);
+        execute($find);
+        $result = result_single($find);
+        if($result === null) {
+            return null;
+        }
+        return new Service($result['id']);
     }
     
     public function get_name() {
@@ -276,13 +304,16 @@ class Product {
         return true;
     }
 
-    public function get_loan_status() {
+    public function get_status() {
         if($this->get_discardtime(false)) {
             return 'discarded';
         }
+        if($this->get_active_service()) {
+            return 'service';
+        }
         $loan = $this->get_active_loan();
         if(!$loan) {
-            return 'no_loan';
+            return 'available';
         }
         if($loan->is_overdue()) {
             return 'overdue';
@@ -302,16 +333,23 @@ class Product {
         return new Loan($result['id']);
     }
 
-    public function get_loan_history() {
-        $find = prepare('select `id` from `loan`
-                         where product=? order by `starttime` desc');
-        bind($find, 'i', $this->id);
-        execute($find);
-        $loans = result_list($find);
+    public function get_history() {
         $out = array();
-        foreach($loans as $loan) {
-            $out[] = new Loan($loan['id']);
+        foreach(array('loan'    => function($id) { return new Loan($id);},
+                      'service' => function($id) { return new Service($id);})
+                          as $type => $func) {
+            $find = prepare("select `id` from `$type`"
+                           .'where `product`=? order by `starttime` desc');
+            bind($find, 'i', $this->id);
+            execute($find);
+            $items = result_list($find);
+            foreach($items as $item) {
+                $out[] = $func($item['id']);
+            }
         }
+        usort($out, function($a, $b) {
+            return $a->get_duration()['start'] < $b->get_duration()['start'];
+        });
         return $out;
     }
 }
