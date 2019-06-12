@@ -159,6 +159,7 @@ abstract class Page extends Responder {
                 }
             }
             $rows .= replace(array('available' => $available,
+                                   'serial' => $product->get_serial(),
                                    'status' => $status,
                                    'item_link' => $prodlink),
                              $this->fragments['product_row']);
