@@ -190,7 +190,7 @@ function suggest(input, type) {
     case 'tag':
         var taglist = document.querySelectorAll('#tags .tag > input')
         for(var i = 0; i < taglist.length; i++) {
-            var tag = taglist[i].name
+            var tag = taglist[i].value
             existing.push(tag.toLowerCase())
         }
         break
