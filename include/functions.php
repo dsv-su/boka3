@@ -224,7 +224,7 @@ function match($testvalues, $matchvalues) {
     }
     foreach($testvalues as $value) {
         foreach($matchvalues as $candidate) {
-            if(fnmatch($value, $candidate, FNM_CASEFOLD)) {
+            if(fnmatch('*'.$value.'*', $candidate, FNM_CASEFOLD)) {
                 return true;
             }
         }
