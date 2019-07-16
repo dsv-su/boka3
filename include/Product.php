@@ -1,6 +1,7 @@
 <?php
 class Product {
     private $id = 0;
+    private $brand = '';
     private $name = '';
     private $invoice = '';
     private $serial = '';
@@ -10,9 +11,10 @@ class Product {
     private $tags = array();
     
     public static function create_product(
-        $name = '',
-        $invoice = '',
-        $serial = '',
+        $brand,
+        $name,
+        $invoice,
+        $serial,
         $info = array(),
         $tags = array()
     ) {
@@ -20,10 +22,10 @@ class Product {
         begin_trans();
         try {
             $stmt = 'insert into
-                         `product`(`name`, `invoice`, `serial`, `createtime`)
-                         values (?, ?, ?, ?)';
+                         `product`(`brand`, `name`, `invoice`, `serial`, `createtime`)
+                         values (?, ?, ?, ?, ?)';
             $ins_prod = prepare($stmt);
-            bind($ins_prod, 'sssi', $name, $invoice, $serial, $now);
+            bind($ins_prod, 'ssssi', $brand, $name, $invoice, $serial, $now);
             execute($ins_prod);
             $product = new Product($serial, 'serial');
             foreach($info as $field => $value) {
@@ -72,6 +74,7 @@ class Product {
         bind($get, 'i', $this->id);
         execute($get);
         $product = result_single($get);
+        $this->brand = $product['brand'];
         $this->name = $product['name'];
         $this->invoice = $product['invoice'];
         $this->serial = $product['serial'];
@@ -120,6 +123,7 @@ class Product {
                     case 'status':
                         $matchvalues[] = $this->get_loan_status();
                     case 'fritext':
+                        $matchvalues[] = $this->brand;
                         $matchvalues[] = $this->name;
                         $matchvalues[] = $this->serial;
                         $matchvalues[] = $this->invoice;
@@ -157,6 +161,18 @@ class Product {
         bind($update, 'ii', $now, $this->id);
         execute($update);
         $this->discardtime = $now;
+        return true;
+    }
+    
+    public function get_brand() {
+        return $this->brand;
+    }
+    
+    public function set_brand($newbrand) {
+        $update = prepare('update `product` set `brand`=? where `id`=?');
+        bind($update, 'si', $newbrand, $this->id);
+        execute($update);
+        $this->brand = $newbrand;
         return true;
     }
     

@@ -74,6 +74,7 @@ class ProductPage extends Page {
                              $this->fragments['tag']);
         }
         $fields = array('id' => $this->product->get_id(),
+                        'brand' => $this->product->get_brand(),
                         'name' => $this->product->get_name(),
                         'serial' => $this->product->get_serial(),
                         'invoice' => $this->product->get_invoice(),
