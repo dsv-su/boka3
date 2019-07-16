@@ -8,7 +8,7 @@ class SearchPage extends Page {
         if(isset($_GET['q']) && !$_GET['q']) {
             unset($_GET['q']);
         }
-        $this->terms = $this->translate_keys($_GET);
+        $this->terms = $_GET;
     }
     
     private function do_search() {
@@ -17,7 +17,7 @@ class SearchPage extends Page {
             return $out;
         }
         foreach(array('user', 'product') as $type) {
-            $result = $this->search($type, $this->terms);
+            $result = $this->search($type, $this->translate_keys($this->terms));
             if($result) {
                 $out[$type] = $result;
             }
@@ -32,6 +32,10 @@ class SearchPage extends Page {
             switch($key) {
                 case 'q':
                     $newkey = 'fritext';
+                    break;
+                case 'tillverkare':
+                case 'märke':
+                    $newkey = 'brand';
                     break;
                 case 'namn':
                     $newkey = 'name';

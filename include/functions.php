@@ -219,6 +219,10 @@ function suggest($type) {
 }
 
 function match($testvalues, $matchvalues) {
+    # match only presence of field (if no value given)
+    if(!$testvalues && $matchvalues) {
+        return true;
+    }
     if(!is_array($testvalues)) {
         $testvalues = array($testvalues);
     }
