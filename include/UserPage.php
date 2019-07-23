@@ -45,13 +45,12 @@ class UserPage extends Page {
         $active_loans = $this->user->get_loans('active');
         $table_active = 'Inga aktuella lån.';
         if($active_loans) {
-            $table_active = $this->build_user_loan_table($active_loans, 'renew');
+            $table_active = $this->build_user_loan_table($active_loans);
         }
         $inactive_loans = $this->user->get_loans('inactive');
         $table_inactive = 'Inga gamla lån.';
         if($inactive_loans) {
-            $table_inactive = $this->build_user_loan_table($inactive_loans,
-                                                           'return');
+            $table_inactive = $this->build_user_loan_table($inactive_loans);
         }
         return replace(array('active_loans' => $table_active,
                              'inactive_loans' => $table_inactive,

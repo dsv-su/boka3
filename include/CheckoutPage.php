@@ -35,12 +35,12 @@ class CheckoutPage extends Page {
             $username = $this->user->get_name();
             $displayname = $this->user->get_displayname();
             $notes = $this->user->get_notes();
-            $enddate = gmdate('Y-m-d', time() + 604800); # 1 week from now
+            $enddate = format_date(default_loan_end(time()));
             $disabled = '';
             $loans = $this->user->get_loans('active');
             $loan_table = 'Inga pågående lån.';
             if($loans) {
-                $loan_table = $this->build_user_loan_table($loans, 'renew');
+                $loan_table = $this->build_user_loan_table($loans);
             }
             $subhead = replace(array('title' => 'Lånade artiklar'),
                                $this->fragments['subtitle']);

@@ -143,7 +143,7 @@ abstract class Page extends Responder {
                 case 'service':
                     $service = $product->get_active_service();
                     $available = 'På service sedan '
-                                .$service->get_duration()['start'];
+                                .format_date($service->get_starttime());
                     break;
                 case 'on_loan':
                 case 'overdue':
@@ -157,7 +157,7 @@ abstract class Page extends Responder {
                     if($loan->is_overdue()) {
                         $available .= ', försenad';
                     } else {
-                        $available .= ', åter '.$loan->get_duration()['end'];
+                        $available .= ', åter '.format_date($loan->get_endtime());
                     }
                     break;
             }
@@ -171,25 +171,7 @@ abstract class Page extends Responder {
                        $this->fragments['product_table']);
     }
 
-    final protected function build_user_loan_table($loans, $show = 'none') {
-        $vis_return = 'hidden';
-        $vis_renew = 'hidden';
-        switch($show) {
-            case 'return':
-                $vis_return = '';
-                break;
-            case 'renew':
-                $vis_renew = '';
-                break;
-            case 'both':
-                $vis_return = '';
-                $vis_renew = '';
-                break;
-            case 'none':
-                break;
-            default:
-                throw new Exception('Invalid argument.');
-        }
+    final protected function build_user_loan_table($loans) {
         $rows = '';
         foreach($loans as $loan) {
             $product = $loan->get_product();
@@ -197,83 +179,70 @@ abstract class Page extends Responder {
                                       'name' => $product->get_name(),
                                       'page' => 'products'),
                                 $this->fragments['item_link']);
-            $duration = $loan->get_duration();
-            $status = 'on_loan';
-            if($loan->is_overdue()) {
-                $status = 'overdue';
+            $status = $loan->get_status();
+            $note = '';
+            if($status === 'active') {
+                $extend = format_date(default_loan_end(time()));
+                $note = replace(array('id' => $product->get_id(),
+                                      'end_new' => $extend),
+                                $this->fragments['loan_extend_form']);
             }
-            $returndate = '';
-            if($duration['return'] !== null) {
-                $returndate = $duration['return'];
+            $start = $loan->get_starttime();
+            $end = $loan->get_returntime();
+            if(!$end) {
+                $end = $loan->get_endtime();
             }
-            $rows .= replace(array('id' => $product->get_id(),
+            $rows .= replace(array('status' => $status,
                                    'item_link' => $prodlink,
-                                   'start_date' => $duration['start'],
-                                   'end_date' => $duration['end'],
-                                   'return_date' => $returndate,
-                                   'status' => $status,
-                                   'vis_renew' => $vis_renew,
-                                   'vis_return' => $vis_return,
-                                   'end_new' => $duration['end_renew']),
-                             $this->fragments['loan_row']);
+                                   'start_date' => format_date($start),
+                                   'end_date' => format_date($end),
+                                   'note' => $note),
+                             $this->fragments['history_row']);
         }
         return replace(array('rows' => $rows,
-                             'vis_renew' => $vis_renew,
-                             'vis_return' => $vis_return,
                              'item' => 'Artikel'),
-                       $this->fragments['loan_table']);
+                       $this->fragments['history_table']);
     }
 
     final protected function build_product_history_table($history) {
         $rows = '';
-        $renew_column_visible = 'hidden';
         foreach($history as $event) {
-            $duration = $event->get_duration();
-            $product = $event->get_product();
-            $fields = array('item_link' => 'Service',
-                            'start_date' => $duration['start'],
-                            'end_date' => $duration['end'],
-                            'return_date' => $duration['return'],
-                            'status' => 'available',
-                            'vis_renew' => $renew_column_visible,
-                            'vis_renew_button' => 'hidden',
-                            'vis_return' => '',
-                            'id' => $product->get_id(),
-                            'end_new' => '');
+            $status = $event->get_status();
+            $itemlink = 'Service';
+            $start = $event->get_starttime();
+            $end = $event->get_returntime();
+            $note = '';
             if($event instanceof Loan) {
                 $user = $event->get_user();
-                $id = $user->get_id();
-                $name = $user->get_name();
-                $fields['item_link'] = replace(array('id' => $id,
-                                                     'name' => $name,
-                                                     'page' => 'users'),
-                                               $this->fragments['item_link']);
-                $fields['end_new'] = $duration['end_renew'];
-                if($event->is_active()) {
-                    $fields['vis_renew_button'] = '';
-                    $fields['vis_renew'] = '';
-                    $renew_column_visible = '';
-                    if($event->is_overdue()) {
-                        $fields['status'] = 'overdue';
-                    } else {
-                        $fields['status'] = 'on_loan';
-                    }
+                $product = $event->get_product();
+                $itemlink = replace(array('id' => $user->get_id(),
+                                          'name' => $user->get_name(),
+                                          'page' => 'users'),
+                                    $this->fragments['item_link']);
+                if(!$end) {
+                    $end = $event->get_endtime();
+                    $extend = format_date(default_loan_end(time()));
+                    $note = replace(array('id' => $product->get_id(),
+                                      'end_new' => $extend),
+                                $this->fragments['loan_extend_form']);
                 }
-            } else if ($event instanceof Service) {
-                $fields['status'] = 'service';
             }
-            $rows .= replace($fields, $this->fragments['loan_row']);
+            $rows .= replace(array('status' => $status,
+                                   'item_link' => $itemlink,
+                                   'start_date' => format_date($start),
+                                   'end_date' => format_date($end),
+                                   'note' => $note),
+                             $this->fragments['history_row']);
+            
         }
         return replace(array('rows' => $rows,
-                             'vis_renew' => $renew_column_visible,
-                             'vis_return' => '',
                              'item' => 'Låntagare'),
-                       $this->fragments['loan_table']);
+                       $this->fragments['history_table']);
     }
 
     final protected function build_inventory_details($inventory,
                                                      $interactive = true) {
-        $duration = $inventory->get_duration();
+        $startdate = format_date($inventory->get_starttime());
         $all_products = get_items('product');
         $seen = $inventory->get_seen_products();
         $unseen = array();
@@ -288,7 +257,7 @@ abstract class Page extends Responder {
             $missing = 'Kvarvarande artiklar';
             $hidden = '';
         }
-        $out = replace(array('start_date' => $duration['start'],
+        $out = replace(array('start_date' => $startdate,
                              'total_count' => count($all_products),
                              'seen_count' => count($seen),
                              'hide' => $hidden),

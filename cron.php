@@ -65,7 +65,7 @@ EOF;
         }
         foreach($loans as $loan) {
             $replacements = array('name' => $loan->get_product()->get_name(),
-                                  'due'  => $loan->get_duration()['end']);
+                                  'due'  => $loan->get_endtime());
             $reminder_list .= replace($replacements, $reminder_template);
         }
 

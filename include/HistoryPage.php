@@ -62,12 +62,13 @@ class HistoryPage extends Page {
                                             'name' => $id,
                                             'page' => 'history'),
                                       $this->fragments['item_link']);
-            $duration = $inventory->get_duration();
             $num_seen = count($inventory->get_seen_products());
             $num_unseen = count($inventory->get_unseen_products());
+            $start = format_date($inventory->get_starttime());
+            $end = format_date($inventory->get_endtime());
             $rows .= replace(array('item_link' => $inventory_link,
-                                   'start_date' => $duration['start'],
-                                   'end_date' => $duration['end'],
+                                   'start_date' => $start,
+                                   'end_date' => $end,
                                    'num_seen' => $num_seen,
                                    'num_unseen' => $num_unseen),
                              $this->fragments['inventory_row']);

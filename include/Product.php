@@ -183,8 +183,10 @@ class Product {
     }
 
     public function get_active_service() {
-        $find = prepare('select `id` from `service`'
-                       .'where `returntime` is null and product=?');
+        $find = prepare('select `id` from `event`
+                             inner join `service`
+                             on `event`.`id` = `service`.`event`
+                         where `returntime` is null and product=?');
         bind($find, 'i', $this->id);
         execute($find);
         $result = result_single($find);
@@ -340,7 +342,9 @@ class Product {
     }
 
     public function get_active_loan() {
-        $find = prepare('select `id` from `loan`
+        $find = prepare('select `id` from `event`
+                             inner join `loan`
+                             on `event`.`id` = `loan`.`event`
                          where `returntime` is null and product=?');
         bind($find, 'i', $this->id);
         execute($find);
@@ -356,7 +360,9 @@ class Product {
         foreach(array('loan'    => function($id) { return new Loan($id);},
                       'service' => function($id) { return new Service($id);})
                           as $type => $func) {
-            $find = prepare("select `id` from `$type`"
+            $find = prepare('select `id` from `event` '
+                           ."inner join `$type` "
+                           ."on `event`.`id` = `$type`.`event` "
                            .'where `product`=? order by `starttime` desc');
             bind($find, 'i', $this->id);
             execute($find);
@@ -366,7 +372,7 @@ class Product {
             }
         }
         usort($out, function($a, $b) {
-            return $a->get_duration()['start'] < $b->get_duration()['start'];
+            return $a->get_starttime() < $b->get_starttime();
         });
         return $out;
     }
