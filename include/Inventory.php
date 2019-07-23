@@ -91,19 +91,14 @@ class Inventory {
         return $this->id;
     }
 
-    public function get_duration($format = true) {
-        $style = function($time) {
-            return $time;
-        };
-        if($format) {
-            $style = function($time) {
-                return gmdate('Y-m-d', $time);
-            };
-        }
-        return array('start' => $style($this->starttime),
-                     'end' => $style($this->endtime));
+    public function get_starttime() {
+        return $this->starttime;
     }
 
+    public function get_endtime() {
+        return $this->endtime;
+    }
+    
     public function get_seen_products() {
         $out = array();
         foreach($this->seen_products as $prodid) {
