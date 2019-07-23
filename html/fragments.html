@@ -378,7 +378,7 @@
 <h2>Gamla lån</h2>
 ¤inactive_loans¤
 
-¤¤ loan_table ¤¤
+¤¤ history_table ¤¤
 <table>
   <thead>
     <tr>
@@ -393,10 +393,8 @@
       <th>
         Slutdatum
       </th>
-      <th class="¤vis_return¤">
-        Återlämnad
-      </th>
-      <th class="¤vis_renew¤">
+      <th>
+        Övrigt
       </th>
     </tr>
   </thead>
@@ -405,7 +403,7 @@
   </tbody>
 </table>
 
-¤¤ loan_row ¤¤
+¤¤ history_row ¤¤
 <tr>
   <td class="¤status¤">
   </td>
@@ -418,33 +416,31 @@
   <td>
     ¤end_date¤
   </td>
-  <td class="¤vis_return¤">
-    ¤return_date¤
-  </td>
-  <td class="¤vis_renew¤">
-    <form class="renew_button"
-          onSubmit="JavaScript:showExtend(event)">
-      <button class="¤vis_renew_button¤">
-        Förläng
-      </button>
-    </form>
-    <form class="renew_confirm hidden"
-          onSubmit="JavaScript:extendLoan(event)">
-      <input type="hidden"
-             name="product"
-             value="¤id¤" />
-      <input onClick="JavaScript:calendar(event)"
-             id="¤id¤_date"
-             class="narrow"
-             type="text"
-             name="end"
-             value="¤end_new¤" />
-      <button>
-        Spara
-      </button>
-    </form>
+  <td>
+    ¤note¤
   </td>
 </tr>
+
+¤¤ loan_extend_form ¤¤
+<button onClick="JavaScript:showExtend(event)">
+  Förläng
+</button>
+<form class="renew_confirm hidden"
+      onSubmit="JavaScript:extendLoan(event)">
+  <input type="hidden"
+         name="product"
+         value="¤id¤" />
+  <input onClick="JavaScript:calendar(event)"
+         id="¤id¤_date"
+         class="narrow"
+         type="text"
+         name="end"
+         value="¤end_new¤" />
+  <button>
+    Spara
+  </button>
+</form>
+
 
 ¤¤ checkout_page ¤¤
 <h2>Välj låntagare</h2>
