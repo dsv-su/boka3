@@ -143,10 +143,10 @@ function checkoutProduct(event) {
 
 function showExtend(event) {
     event.preventDefault()
-    var form = event.currentTarget
-    var confirm = form.parentNode.querySelector('.renew_confirm')
+    var button = event.currentTarget
+    var confirm = button.parentNode.querySelector('.renew_confirm')
     confirm.classList.remove('hidden')
-    form.classList.add('hidden')
+    button.classList.add('hidden')
 }
 
 function extendLoan(event) {
