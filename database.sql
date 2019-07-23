@@ -75,29 +75,34 @@ create table `user` (
 ) character set utf8mb4,
   collate utf8mb4_unicode_ci;
 
-create table `loan` (
+create table `event` (
   `id` bigint(20) not null auto_increment,
   primary key(`id`),
-  `user` bigint(20) not null,
-  constraint `l_f_user`
-    foreign key(`user`) references `user`(`id`),
   `product` bigint(20) not null,
-  constraint `l_f_product`
+  constraint `e_f_product`
     foreign key(`product`) references `product`(`id`),
   `starttime` bigint(20) not null,
-  `endtime` bigint(20) not null,
   `returntime` bigint(20) default null
 ) character set utf8mb4,
   collate utf8mb4_unicode_ci;
 
+create table `loan` (
+  `event` bigint(20) not null,
+  primary key(`event`),
+  constraint `l_f_event`
+    foreign key(`event`) references `event`(`id`),
+  `user` bigint(20) not null,
+  constraint `l_f_user`
+    foreign key(`user`) references `user`(`id`),
+  `endtime` bigint(20) not null
+) character set utf8mb4,
+  collate utf8mb4_unicode_ci;
+
 create table `service` (
-  `id` bigint(20) not null auto_increment,
-  primary key(`id`),
-  `product` bigint(20) not null,
-  constraint `s_f_product`
-    foreign key(`product`) references `product`(`id`),
-  `starttime` bigint(20) not null,
-  `returntime` bigint(20) default null
+  `event` bigint(20) not null,
+  primary key(`event`),
+  constraint `s_f_event`
+    foreign key(`event`) references `event`(`id`)
 ) character set utf8mb4,
   collate utf8mb4_unicode_ci;
 
