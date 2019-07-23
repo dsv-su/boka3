@@ -72,11 +72,15 @@ td.available {
     background-color: #a3a86b;
 }
 
-td.on_loan {
+td.on_loan, td.active_loan {
     background-color: #acdee6;
 }
 
-td.overdue {
+td.inactive_loan {
+    background-color: #cdebf0;
+}
+
+td.overdue, td.overdue_loan {
     background-color: #d95e00;
 }
 
@@ -84,8 +88,12 @@ td.discarded {
     background-color: #a0a0a0;
 }
 
-td.service {
+td.service, td.active_service {
     background-color: #e7e08d;
+}
+
+td.inactive_service {
+    background-color: #edeeae;
 }
 
 tbody tr {
