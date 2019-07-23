@@ -236,6 +236,18 @@ function match($testvalues, $matchvalues) {
     return false;
 }
 
+function format_date($date) {
+    if($date) {
+        return gmdate('Y-m-d', $date);
+    }
+    return $date;
+}
+
+function default_loan_end($start) {
+    return $start + 604800; # 1 week later
+}
+
+
 ### Database interaction functions ###
 
 $db = new mysqli($db_host, $db_user, $db_pass, $db_name);
