@@ -113,7 +113,9 @@ class User {
     }
 
     public function get_loans($type = 'both') {
-        $statement = "select `id` from `event` where
+        $statement = "select `id` from `event` 
+                      left join `loan` on `event`.`id` = `loan`.`event`
+                      where
                           `type`='loan' and `user`=?";
         switch($type) {
             case 'active':
