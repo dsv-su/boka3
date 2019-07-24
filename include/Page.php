@@ -182,7 +182,7 @@ abstract class Page extends Responder {
                                 $this->fragments['item_link']);
             $status = $loan->get_status();
             $note = '';
-            if($status === 'active') {
+            if($status !== 'inactive_loan') {
                 $extend = format_date(default_loan_end(time()));
                 $note = replace(array('id' => $product->get_id(),
                                       'end_new' => $extend),
