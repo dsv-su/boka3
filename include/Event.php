@@ -5,7 +5,7 @@ class Event {
     protected $starttime = 0;
     protected $returntime = null;
 
-    protected static function create_event($product) {
+    protected static function create_event($product, $type) {
         $status = $product->get_status();
         if($status != 'available') {
             $emsg = '';
@@ -28,11 +28,18 @@ class Event {
             }
             throw new Exception($emsg);
         }
+        switch($type) {
+            case 'loan':
+            case 'service':
+                break;
+            default:
+                throw new Excpetion("Invalid argument '$type'");
+        }
         $now = time();
-        $insert = prepare('insert into
-                               `event`(`product`, `starttime`)
-                               values (?, ?)');
-        bind($insert, 'ii', $product->get_id(), $now);
+        $insert = prepare('insert into `event`
+                               (`product`, `type`, `starttime`)
+                               values (?, ?, ?)');
+        bind($insert, 'isi', $product->get_id(), $type, $now);
         execute($insert);
         $event_id = $insert->insert_id;
         return new Event($event_id);

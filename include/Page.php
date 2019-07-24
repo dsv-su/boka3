@@ -134,15 +134,16 @@ abstract class Page extends Responder {
                                       'name' => $product->get_name(),
                                       'page' => 'products'),
                                 $this->fragments['item_link']);
-            $available = 'Tillgänglig';
+            $note = 'Tillgänglig';
             $status = $product->get_status();
             switch($status) {
                 case 'discarded':
-                    $available = 'Skrotad '.$discarded;
+                    $discarded = format_date($product->get_discardtime());
+                    $note = 'Skrotad '.$discarded;
                     break;
                 case 'service':
                     $service = $product->get_active_service();
-                    $available = 'På service sedan '
+                    $note = 'På service sedan '
                                 .format_date($service->get_starttime());
                     break;
                 case 'on_loan':
@@ -153,18 +154,18 @@ abstract class Page extends Responder {
                                               'id' => $user->get_id(),
                                               'page' => 'users'),
                                         $this->fragments['item_link']);
-                    $available = 'Utlånad till '.$userlink;
+                    $note = 'Utlånad till '.$userlink;
                     if($loan->is_overdue()) {
-                        $available .= ', försenad';
+                        $note .= ', försenad';
                     } else {
-                        $available .= ', åter '.format_date($loan->get_endtime());
+                        $note .= ', slutdatum '.format_date($loan->get_endtime());
                     }
                     break;
             }
-            $rows .= replace(array('available' => $available,
+            $rows .= replace(array('status' => $status,
+                                   'item_link' => $prodlink,
                                    'serial' => $product->get_serial(),
-                                   'status' => $status,
-                                   'item_link' => $prodlink),
+                                   'note' => $note,),
                              $this->fragments['product_row']);
         }
         return replace(array('rows' => $rows),
@@ -240,6 +241,63 @@ abstract class Page extends Responder {
                        $this->fragments['history_table']);
     }
 
+    final protected function build_seen_table($products, $inventory) {
+        $rows = '';
+        foreach($products as $product) {
+            $prodid = $product->get_id();
+            $prodlink = replace(array('id' => $prodid,
+                                      'name' => $product->get_name(),
+                                      'page' => 'products'),
+                                $this->fragments['item_link']);
+            $regtime = $inventory->get_product_regtime($product);
+            $event = $product->get_historic_event($regtime);
+            $status = '';
+            $note = '';
+            if(!$event) {
+                $discardtime = $product->get_discardtime();
+                if($discardtime && $discardtime < $regtime) {
+                    $status = 'discarded';
+                    $note = 'Skrotad '.format_date($discardtime);
+                } else {
+                    $status = 'available';
+                }
+            } else if($event instanceof Service) {
+                $status = 'service';
+                $note = 'På service sedan '.format_date($event->get_starttime());
+                $returntime = $event->get_returntime();
+                if($returntime) {
+                    $note .= ', åter den '.format_date($returntime);
+                }
+            } else if($event instanceof Loan) {
+                $user = $event->get_user();
+                $userlink = replace(array('name' => $user->get_displayname(),
+                                          'id' => $user->get_id(),
+                                          'page' => 'users'),
+                                    $this->fragments['item_link']);
+                $status = 'on_loan';
+                $note = 'Utlånad till '.$userlink;
+                $returntime = $event->get_returntime();
+                if($event->get_endtime() < $regtime) {
+                    $status = 'overdue';
+                    $note .= ', försenad';
+                } else {
+                    $note .= ', slutdatum '.format_date($event->get_endtime());
+                }
+                if($returntime) {
+                    $note .= ', återlämnad '.format_date($returntime);
+                }
+            }
+            $rows .= replace(array('status' => $status,
+                                   'item_link' => $prodlink,
+                                   'serial' => $product->get_serial(),
+                                   'note' => $note),
+                             $this->fragments['product_row']);
+        }
+        return replace(array('rows' => $rows),
+                       $this->fragments['product_table']);
+
+    }
+
     final protected function build_inventory_details($inventory,
                                                      $interactive = true) {
         $startdate = format_date($inventory->get_starttime());
@@ -272,7 +330,7 @@ abstract class Page extends Responder {
         $out .= replace(array('title' => 'Inventerade artiklar'),
                         $this->fragments['subtitle']);
         if($seen) {
-            $out .= $this->build_product_table($seen);
+            $out .= $this->build_seen_table($seen, $inventory);
         } else {
             $out .= 'Inga artiklar inventerade.';
         }

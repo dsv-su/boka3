@@ -148,10 +148,7 @@ class Product {
         return $this->createtime;
     }
 
-    public function get_discardtime($format = true) {
-        if($this->discardtime && $format) {
-            return gmdate('Y-m-d', $this->discardtime);
-        }
+    public function get_discardtime() {
         return $this->discardtime;
     }
 
@@ -325,7 +322,7 @@ class Product {
     }
 
     public function get_status() {
-        if($this->get_discardtime(false)) {
+        if($this->get_discardtime()) {
             return 'discarded';
         }
         if($this->get_active_service()) {
@@ -339,6 +336,32 @@ class Product {
             return 'overdue';
         }
         return 'on_loan';
+    }
+
+    public function get_historic_event($time) {
+        $search = prepare("select `id`,`type` from `event`
+                               where `product` = ?
+                               and `starttime` < ?
+                               and ( `returntime` > ?
+                               or `returntime` is null )");
+        bind($search, 'iii', $this->id, $time, $time);
+        execute($search);
+        $result = result_single($search);
+        if(!$result) {
+            return null;
+        }
+        $id = $result['id'];
+        $type = $result['type'];
+        switch($type) {
+            case 'service':
+                return new Service($id);
+                break;
+            case 'loan':
+                return new Loan($id);
+                break;
+            default:
+                throw new Exception("Invalid type '$type'");
+        }
     }
 
     public function get_active_loan() {
@@ -357,23 +380,25 @@ class Product {
 
     public function get_history() {
         $out = array();
-        foreach(array('loan'    => function($id) { return new Loan($id);},
-                      'service' => function($id) { return new Service($id);})
-                          as $type => $func) {
-            $find = prepare('select `id` from `event` '
-                           ."inner join `$type` "
-                           ."on `event`.`id` = `$type`.`event` "
-                           .'where `product`=? order by `starttime` desc');
-            bind($find, 'i', $this->id);
-            execute($find);
-            $items = result_list($find);
-            foreach($items as $item) {
-                $out[] = $func($item['id']);
+        $find = prepare('select `id`,`type` from `event` '
+                       .'where `product`=? order by `starttime` desc');
+        bind($find, 'i', $this->id);
+        execute($find);
+        $items = result_list($find);
+        foreach($items as $item) {
+            $id = $item['id'];
+            switch($item['type']) {
+                case 'service':
+                    $out[] = new Service($id);
+                    break;
+                case 'loan':
+                    $out[] = new Loan($id);
+                    break;
+                default:
+                    $type = $item['type'];
+                    throw new Exception("Invalid type '$type'");
             }
         }
-        usort($out, function($a, $b) {
-            return $a->get_starttime() < $b->get_starttime();
-        });
         return $out;
     }
 }

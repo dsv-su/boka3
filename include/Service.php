@@ -2,7 +2,7 @@
 class Service extends Event {
     public static function create_service($product) {
         begin_trans();
-        $event = parent::create_event($product);
+        $event = parent::create_event($product, 'service');
         $event_id = $event->get_id();
         $insert = prepare('insert into `service`(`event`) values (?)');
         bind($insert, 'i', $event_id);

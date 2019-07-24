@@ -5,10 +5,12 @@ class Loan extends Event {
 
     public static function create_loan($user, $product, $endtime) {
         begin_trans();
-        $event = parent::create_event($product);
+        $event = parent::create_event($product, 'loan');
         $event_id = $event->get_id();
-        $insert = prepare('insert into `loan`(`user`, `endtime`) values (?, ?)');
-        bind($insert, 'ii', $user->get_id(), strtotime($endtime . ' 13:00'));
+        $insert = prepare('insert into `loan`(`event`, `user`, `endtime`)
+                               values (?, ?, ?)');
+        $endtime .= '13:00';
+        bind($insert, 'iii', $event_id, $user->get_id(), strtotime($endtime));
         execute($insert);
         commit_trans();
         return new Loan($event_id);

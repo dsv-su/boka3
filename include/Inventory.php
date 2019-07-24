@@ -15,12 +15,12 @@ class Inventory {
         execute($start);
         $invid = $start->insert_id;
         $prodid = '';
-        $register = prepare('insert into
-                                 `inventory_product`(`inventory`, `product`)
-                                 values (?, ?)');
-        foreach(get_items('loan_active') as $loan) {
-            $prodid = $loan->get_product()->get_id();
-            bind($register, 'ii', $invid, $prodid);
+        $register = prepare('insert into `inventory_product`
+                                 (`inventory`, `product`, `regtime`)
+                                 values (?, ?, ?)');
+        foreach(get_items('event_active') as $event) {
+            $prodid = $event->get_product()->get_id();
+            bind($register, 'iii', $invid, $prodid, $now);
             execute($register);
         }
         return new Inventory($invid);
@@ -75,9 +75,10 @@ class Inventory {
     }
 
     public function add_product($product) {
-        $add = prepare('insert into `inventory_product`(`inventory`, `product`)
-                            values (?, ?)');
-        bind($add, 'ii', $this->id, $product->get_id());
+        $add = prepare('insert into `inventory_product`
+                            (`inventory`, `product`, `regtime`)
+                            values (?, ?, ?)');
+        bind($add, 'iii', $this->id, $product->get_id(), time());
         try {
             execute($add);
         } catch(Exception $e) {
@@ -105,6 +106,21 @@ class Inventory {
             $out[] = new Product($prodid);
         }
         return $out;
+    }
+
+    public function get_product_regtime($product) {
+        $invid = $this->id;
+        $prodid = $product->get_id();
+        $search = prepare('select `regtime` from `inventory_product`
+                           where `inventory` = ? and `product` = ?');
+        bind($search, 'ii', $invid, $prodid);
+        execute($search);
+        $result = result_single($search);
+        if(!$result) {
+            $emsg = "Inventory $invid has no reference to product $prodid.";
+                throw new Exception($emsg);
+        }
+        return $result['regtime'];
     }
 
     public function get_unseen_products() {

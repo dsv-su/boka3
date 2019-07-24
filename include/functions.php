@@ -108,17 +108,17 @@ function get_ids($type) {
         case 'product':
             $append = 'where `discardtime` is null';
             break;
-        case 'loan':
+        case 'product_discarded':
+            $type = 'product';
+            $append = 'where `discardtime` is not null';
+            break;
+        case 'event':
+            break;
+        case 'event_active':
+            $type = 'event';
+            $append = 'where `returntime` is null';
             break;
         case 'inventory':
-            break;
-        case 'product_discarded':
-            $append = 'where `discardtime` is not null';
-            $type = 'product';
-            break;
-        case 'loan_active':
-            $append = 'where `returntime` is null';
-            $type = 'loan';
             break;
         case 'inventory_old':
             $append = 'where `endtime` is not null order by `id` desc';
@@ -156,10 +156,10 @@ function get_items($type) {
                 return new Product($id);
             };
             break;
-        case 'loan':
-        case 'loan_active':
+        case 'event':
+        case 'event_active':
             $construct = function($id) {
-                return new Loan($id);
+                return new Event($id);
             };
             break;
         case 'inventory':

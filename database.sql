@@ -78,6 +78,7 @@ create table `user` (
 create table `event` (
   `id` bigint(20) not null auto_increment,
   primary key(`id`),
+  `type` varchar(64),
   `product` bigint(20) not null,
   constraint `e_f_product`
     foreign key(`product`) references `product`(`id`),
@@ -123,7 +124,8 @@ create table `inventory_product` (
   `product` bigint(20) not null,
   constraint `i_f_product`
     foreign key(`product`) references `product`(`id`),
-  unique `uniq_inventory_product`(`inventory`, `product`)
+  unique `uniq_inventory_product`(`inventory`, `product`),
+  `regtime` bigint(20) not null
 ) character set utf8mb4,
   collate utf8mb4_unicode_ci;
 
