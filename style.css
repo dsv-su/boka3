@@ -88,12 +88,8 @@ td.discarded {
     background-color: #a0a0a0;
 }
 
-td.service, td.active_service {
+td.service, td.active_service, td.inactive_service {
     background-color: #e7e08d;
-}
-
-td.inactive_service {
-    background-color: #edeeae;
 }
 
 tbody tr {
