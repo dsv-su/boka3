@@ -180,10 +180,10 @@ class Product {
     }
 
     public function get_active_service() {
-        $find = prepare('select `id` from `event`
-                             inner join `service`
-                             on `event`.`id` = `service`.`event`
-                         where `returntime` is null and product=?');
+        $find = prepare("select `id` from `event` where
+                             `type`='service'
+                             and `returntime` is null
+                             and product=?");
         bind($find, 'i', $this->id);
         execute($find);
         $result = result_single($find);
@@ -365,10 +365,10 @@ class Product {
     }
 
     public function get_active_loan() {
-        $find = prepare('select `id` from `event`
-                             inner join `loan`
-                             on `event`.`id` = `loan`.`event`
-                         where `returntime` is null and product=?');
+        $find = prepare("select `id` from `event`
+                             where `type`='loan'
+                             and `returntime` is null
+                             and product=?");
         bind($find, 'i', $this->id);
         execute($find);
         $result = result_single($find);

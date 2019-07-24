@@ -113,10 +113,8 @@ class User {
     }
 
     public function get_loans($type = 'both') {
-        $statement = 'select `id` from `event`
-                          inner join `loan` on
-                          `event`.`id` = `loan`.`event`
-                      where `user`=?';
+        $statement = "select `id` from `event` where
+                          `type`='loan' and `user`=?";
         switch($type) {
             case 'active':
                 $statement .= ' and `returntime` is null';
