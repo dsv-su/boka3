@@ -104,6 +104,11 @@ thead th, tfoot tr {
     background-color: #c3d1e2;
 }
 
+thead th:nth-child(2),
+thead th:nth-last-child(-n+2) {
+   word-break: break-word;
+}
+
 input:disabled, textarea:disabled {
     background-color: #ededed;
 }
