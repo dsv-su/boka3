@@ -72,6 +72,10 @@ td.available {
     background-color: #a3a86b;
 }
 
+td.status, th.status {
+    width: 5px;
+}
+
 td.on_loan, td.active_loan {
     background-color: #acdee6;
 }
