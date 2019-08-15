@@ -218,6 +218,37 @@ function suggest($type) {
     return $out;
 }
 
+function suggest_content($fieldname) {
+    $search = '';
+    $resultfield = $fieldname;
+    switch($fieldname) {
+        case 'name':
+            $search = prepare('select distinct `name`
+                               from `product` order by `name`');
+            break;
+        case 'brand':
+            $search = prepare('select distinct `brand`
+                               from `product` order by `brand`');
+            break;
+        default:
+            $search = prepare("select distinct `data` from `product_info`
+                               where `field` = ? order by `data`");
+            bind($search, 's', $fieldname);
+            $resultfield = 'data';
+    }
+    $out = array();
+    execute($search);
+    try {
+        $results = result_list($search);
+    } catch(Exception $e) {
+        return array();
+    }
+    foreach($results as $row) {
+        $out[] = $row[$resultfield];
+    }
+    return $out;
+}
+
 function match($testvalues, $matchvalues) {
     # match only presence of field (if no value given)
     if(!$testvalues && $matchvalues) {

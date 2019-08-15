@@ -51,6 +51,9 @@ class Ajax extends Responder {
             case 'suggest':
                 $out = $this->suggest();
                 break;
+            case 'suggestcontent':
+                $out = $this->suggest_content();
+                break;
             case 'discardproduct':
                 $out = $this->discard_product();
                 break;
@@ -337,6 +340,10 @@ class Ajax extends Responder {
     
     private function suggest() {
         return new Success(suggest($_POST['type']));
+    }
+
+    private function suggest_content() {
+        return new Success(suggest_content($_POST['fieldname']));
     }
 
     private function discard_product() {

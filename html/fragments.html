@@ -117,7 +117,7 @@
 <h2>Mallar</h2>
 <form class="dark templates"
       onSubmit="JavaScript:loadTemplate(event)">
-  <datalist id="templatelist"></datalist>
+  <datalist id="template_suggest"></datalist>
   <input type="hidden"
          name="page"
          value="products" />
@@ -125,7 +125,7 @@
          name="action"
          value="new" />
   <input onFocus="JavaScript:suggest(this, 'template')"
-         list="templatelist"
+         list="template_suggest"
          autocomplete="off"
          type="text"
          name="template"
@@ -150,8 +150,8 @@
   <input type="hidden"
          name="id"
          value="¤id¤" />
-  <datalist id="fieldlist"></datalist>
-  <datalist id="taglist"></datalist>
+  <datalist id="field_suggest"></datalist>
+  <datalist id="tag_suggest"></datalist>
   <table>
     <tfoot>
       <tr>
@@ -177,7 +177,11 @@
         <td>
           <input type="text"
                  name="name"
-                 value="¤name¤" />
+                 value="¤name¤"
+                 onFocus="JavaScript:suggestContent(this)"
+                 list="name_suggest"
+                 autocomplete="off" />
+          <datalist id="name_suggest"></datalist>
         </td>
       </tr>
       <tr>
@@ -187,7 +191,11 @@
         <td>
           <input type="text"
                  name="brand"
-                 value="¤brand¤" />
+                 value="¤brand¤"
+                 onFocus="JavaScript:suggestContent(this)"
+                 list="brand_suggest"
+                 autocomplete="off" />
+          <datalist id="brand_suggest"></datalist>
         </td>
       </tr>
       <tr>
@@ -215,7 +223,7 @@
         <td>
           <input onKeyPress="JavaScript:addField(event)"
                  onFocus="JavaScript:suggest(this, 'field')"
-                 list="fieldlist"
+                 list="field_suggest"
                  autocomplete="off"
                  class="newfield"
                  type="text"
@@ -237,7 +245,7 @@
           ¤tags¤
           <input onKeyPress="JavaScript:addTag(event)"
                  onFocus="JavaScript:suggest(this, 'tag')"
-                 list="taglist"
+                 list="tag_suggest"
                  autocomplete="off"
                  class="newtag"
                  type="text"
@@ -301,7 +309,11 @@
     <input type="text"
            class="info_item"
            name="¤key¤"
-           value="¤value¤" />
+           value="¤value¤"
+           onFocus="JavaScript:suggestContent(this)"
+           list="¤key¤_suggest"
+           autocomplete="off" />
+    <datalist id="¤key¤_suggest"></datalist>
   </td>
 </tr>
 
@@ -447,7 +459,7 @@
 <form class="dark"
       action="./"
       method="GET">
-  <datalist id="userlist"></datalist>
+  <datalist id="user_suggest"></datalist>
   <input type="hidden"
          name="page"
          value="checkout" />
@@ -458,7 +470,7 @@
     <input onFocus="JavaScript:suggest(this, 'user')"
            type="text"
            name="user"
-           list="userlist"
+           list="user_suggest"
            autocomplete="off"
            placeholder="Användarnamn"
            value="¤user¤"

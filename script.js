@@ -201,7 +201,7 @@ function suggest(input, type) {
         break
     }
     var render = function(result) {
-        var suggestlist = document.querySelector('#' + type + 'list')
+        var suggestlist = input.list
         while(suggestlist.firstChild) {
             suggestlist.removeChild(suggestlist.firstChild)
         }
@@ -221,6 +221,22 @@ function suggest(input, type) {
         }
     }
     ajaxRequest('suggest', [['type', type]], render)
+}
+
+function suggestContent(input) {
+    var render = function(result) {
+        var suggestlist = input.list
+        while(suggestlist.firstChild) {
+            suggestlist.removeChild(suggestlist.firstChild)
+        }
+        var suggestions = result.message
+        for(var i = 0; i < suggestions.length; i++) {
+            var next = document.createElement('option')
+            next.value = suggestions[i]
+            suggestlist.appendChild(next)
+        }
+    }
+    ajaxRequest('suggestcontent', [['fieldname', input.name]], render)
 }
 
 function addField(event) {
