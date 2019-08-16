@@ -176,6 +176,7 @@ class Ajax extends Responder {
         $serial = $info['serial'];
         $invoice = $info['invoice'];
         $tags = array();
+        error_log(print_r($_POST, true));
         if(isset($info['tag'])) {
             $tags = $this->unescape_tags($info['tag']);
         }
@@ -222,6 +223,9 @@ class Ajax extends Responder {
         $product = new Product($id);
         if($product->get_discardtime()) {
             return new Failure('Skrotade artiklar får inte modifieras.');
+        }
+        if($brand != $product->get_brand()) {
+            $product->set_brand($brand);
         }
         if($name != $product->get_name()) {
             $product->set_name($name);
