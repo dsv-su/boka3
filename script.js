@@ -336,11 +336,15 @@ function removeTag(event) {
 
 function loadTemplate(event) {
     var form = event.currentTarget
-    var template = form.template.value
+    var input = form.template
+    var template = ucfirst(input.value.toLowerCase())
     if(template === '') {
         return
     }
-    var options = form.querySelector('#templatelist').options
+    var options = input.list.childNodes
+    if(options.length == 0) {
+        return
+    }
     for(var i = 0; i < options.length; i++) {
         if(options[i].value == template) {
             return

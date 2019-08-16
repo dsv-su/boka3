@@ -172,13 +172,19 @@ class Ajax extends Responder {
         $info = $_POST;
         $id = $info['id'];
         $name = $info['name'];
+        $brand = $info['brand'];
         $serial = $info['serial'];
         $invoice = $info['invoice'];
         $tags = array();
         if(isset($info['tag'])) {
             $tags = $this->unescape_tags($info['tag']);
         }
-        foreach(array('id', 'name', 'serial', 'invoice', 'tag') as $key) {
+        foreach(array('id',
+                      'name',
+                      'brand',
+                      'serial',
+                      'invoice',
+                      'tag') as $key) {
             unset($info[$key]);
         }
         if(!$name) {
@@ -198,7 +204,8 @@ class Ajax extends Responder {
                     'Det angivna serienumret finns redan på en annan artikel.');
             } catch(Exception $e) {}
             try {
-                $product = Product::create_product($name,
+                $product = Product::create_product($brand,
+                                                   $name,
                                                    $invoice,
                                                    $serial,
                                                    $info,
@@ -286,7 +293,8 @@ class Ajax extends Responder {
                       'name',
                       'serial',
                       'invoice',
-                      'tags') as $key) {
+                      'brand',
+                      'tag') as $key) {
             unset($info[$key]);
         }
         if(!$name) {

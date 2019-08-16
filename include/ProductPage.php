@@ -132,7 +132,7 @@ class ProductPage extends Page {
                               'tags' => $tags,
                               'info' => $fields,
                               'label' => '',
-                              'hidden' => ''),
+                              'hidden' => 'hidden'),
                         $this->fragments['product_details']);
         return $out;
     }
