@@ -126,6 +126,7 @@ class ProductPage extends Page {
                        $this->fragments['template_management']);
         $out .= replace(array('id' => '',
                               'name' => '',
+                              'brand' => '',
                               'serial' => '',
                               'invoice' => '',
                               'tags' => $tags,
