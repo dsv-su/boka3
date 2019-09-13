@@ -6,7 +6,7 @@ class CheckoutPage extends Page {
     public function __construct() {
         parent::__construct();
         if(isset($_GET['user'])) {
-            $this->userstr = $_GET['user'];
+            $this->userstr = trim(strtolower($_GET['user']));
             try {
                 $this->user = new User($this->userstr, 'name');
             } catch(Exception $ue) {
