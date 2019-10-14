@@ -1,5 +1,9 @@
 <?php
-require_once('./include/view.php');
+spl_autoload_register(function ($class) {
+    include('./include/'.$class.'.php');
+});
+require('./config.php');
+require('./include/functions.php');
 
 header('Content-Type: text/html; charset=UTF-8');
 
@@ -65,7 +69,7 @@ EOF;
         }
         foreach($loans as $loan) {
             $replacements = array('name' => $loan->get_product()->get_name(),
-                                  'due'  => $loan->get_endtime());
+                                  'due'  => format_date($loan->get_endtime()));
             $reminder_list .= replace($replacements, $reminder_template);
         }
 
@@ -88,6 +92,4 @@ EOF;
         }
     }
 }
-
-
 ?>
