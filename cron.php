@@ -42,16 +42,24 @@ class Cron {
     
     private function send_reminder($user, $loans) {
         $subject_template = "DSV Helpdesk: Du har ¤count¤ ¤late¤ lån";
-        $reminder_template = "¤name¤, försenad sedan ¤due¤\n";
+        $reminder_template_sv = "¤name¤, försenad sedan ¤due¤\n";
+        $reminder_template_en = "¤name¤, late since ¤due¤\n";
         $message_template = <<<EOF
 Hej ¤name¤
 
-Vi vill påminna dig om att ditt lån av följande ¤product¤ har gått ut:
+Vi vill påminna dig om att ditt lån har gått ut på följande ¤product_sv¤:
 
-¤list¤
+¤list_sv¤
 
-Vänligen återlämna dem till Helpdesk så snart som möjligt, alternativt kontakta
-oss för att få lånet förlängt.
+Vänligen återlämna ¤it_sv¤ till Helpdesk så snart som möjligt, alternativt svara på det här meddelandet för att förlänga ¤loan_sv¤.
+
+----
+
+We would like to remind you that your loan has expired on the following ¤product_en¤:
+
+¤list_en¤
+
+Please return ¤it_en¤ to the Helpdesk as soon as possible, or reply to this message in order to extend the ¤loan_en¤.
 
 Mvh
 DSV Helpdesk
@@ -60,30 +68,49 @@ helpdesk@dsv.su.se
 EOF;
 
         $overdue_count = count($loans);
-        $reminder_list = '';
+        $reminder_list_sv = '';
+        $reminder_list_en = '';
         $late = 'försenat';
-        $product = 'artikel';
-        if($count > 1) {
+        $product_sv = 'artikel';
+        $product_en = 'product';
+        $it_sv = 'den';
+        $it_en = 'it';
+        $loan_sv = 'lånet';
+        $loan_en = 'loan';
+        if($overdue_count > 1) {
             $late = 'försenade';
-            $product = 'artiklar';
+            $product_sv = 'artiklar';
+            $product_en = 'products';
+            $it_sv = 'dem';
+            $it_en = 'them';
+            $loan_sv = 'lånen';
+            $loan_en = 'loans';
         }
         foreach($loans as $loan) {
             $replacements = array('name' => $loan->get_product()->get_name(),
                                   'due'  => format_date($loan->get_endtime()));
-            $reminder_list .= replace($replacements, $reminder_template);
+            $reminder_list_sv .= replace($replacements, $reminder_template_sv);
+            $reminder_list_en .= replace($replacements, $reminder_template_en);
         }
 
         $subject = replace(array('count' => $overdue_count,
                                  'late'  => $late), $subject_template);
-        $message = replace(array('name'    => $user->get_displayname(),
-                                 'list'    => $reminder_list,
-                                 'product' => $product), $message_template);
+        $message = replace(array('name'       => $user->get_displayname(),
+                                 'list_sv'    => $reminder_list_sv,
+                                 'product_sv' => $product_sv,
+                                 'it_sv'      => $it_sv,
+                                 'loan_sv'    => $loan_sv,
+                                 'list_en'    => $reminder_list_en,
+                                 'product_en' => $product_en,
+                                 'it_en'      => $it_en,
+                                 'loan_en'    => $loan_en),
+                           $message_template);
 
         try {
             mb_send_mail($user->get_email(),
                          $subject,
                          $message,
-                         'From: noreply-boka@dsv.su.se');
+                         'From: helpdesk@dsv.su.se');
         } catch(Exception $e) {
             mb_send_mail('root@dsv.su.se',
                          "Kunde inte skicka påminnelse",
