@@ -176,7 +176,6 @@ class Ajax extends Responder {
         $serial = $info['serial'];
         $invoice = $info['invoice'];
         $tags = array();
-        error_log(print_r($_POST, true));
         if(isset($info['tag'])) {
             $tags = $this->unescape_tags($info['tag']);
         }
