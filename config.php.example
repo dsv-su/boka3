@@ -1,8 +1,21 @@
 <?php
 
+# Database info
 $db_host = 'dbserver';
 $db_user = 'dbname';
 $db_pass = 'dbpassword';
 $db_name = 'dbuser';
+
+# Address to use as the sender for reminder emails
+$reminder_sender = 'noreply@example.com';
+
+# Address to send cron error messages to
+$error_address = 'root@example.com';
+
+# Discard notifications
+# If this is set to an email address, the system will send a notification
+# there each time a product is discarded.
+#$notify_discard = 'inventory-tracking@example.com';
+$discard_notify = false;
 
 ?>
