@@ -21,7 +21,7 @@
          name="action"
          value="checkout" />
 </form>
-<table>
+<table id="user-table">
   <thead>
     <tr>
       <th>
@@ -62,6 +62,24 @@
   </td>
 </tr>
 
+¤¤ product_page ¤¤
+<div id="product-table">
+  <form id="product-create"
+        action="./"
+        method="get">
+    <input type="hidden"
+           name="page"
+           value="products" />
+    <input type="hidden"
+           name="action"
+           value="new" />
+    <button>
+      Ny artikel
+    </button>
+    ¤product_table¤
+  </form>
+</div>
+
 ¤¤ product_table ¤¤
 <table>
   <thead>
@@ -99,183 +117,216 @@
   </td>
 </tr>
 
-¤¤ create_product ¤¤
-<form action="./"
-      method="get">
-  <input type="hidden"
-         name="page"
-         value="products" />
-  <input type="hidden"
-         name="action"
-         value="new" />
-  <button>
-    Ny artikel
-  </button>
-</form>
-
 ¤¤ template_management ¤¤
-<h2>Mallar</h2>
-<form class="dark templates"
-      onSubmit="JavaScript:loadTemplate(event)">
-  <datalist id="template_suggest"></datalist>
-  <input type="hidden"
-         name="page"
-         value="products" />
-  <input type="hidden"
-         name="action"
-         value="new" />
-  <input onFocus="JavaScript:suggest(this, 'template')"
-         list="template_suggest"
-         autocomplete="off"
-         type="text"
-         name="template"
-         value="¤template¤"
-         placeholder="Namn" />
-  <button>
-    Ladda
-  </button>
-  <button onClick="JavaScript:saveTemplate(event)">
-    Spara
-  </button>
-  <button onClick="JavaScript:deleteTemplate(event)">
-    Ta bort
-  </button>
-</form>
+<div>
+  <h2>Mallar</h2>
+  <form class="dark templates"
+        onSubmit="JavaScript:loadTemplate(event)">
+    <datalist id="template_suggest"></datalist>
+    <input type="hidden"
+           name="page"
+           value="products" />
+    <input type="hidden"
+           name="action"
+           value="new" />
+    <input onFocus="JavaScript:suggest(this, 'template')"
+           list="template_suggest"
+           autocomplete="off"
+           type="text"
+           name="template"
+           value="¤template¤"
+           placeholder="Namn" />
+    <button>
+      Ladda
+    </button>
+    <button onClick="JavaScript:saveTemplate(event)">
+      Spara
+    </button>
+    <button onClick="JavaScript:deleteTemplate(event)">
+      Ta bort
+    </button>
+  </form>
+</div>
 
 ¤¤ product_details ¤¤
-<h2>Artikeldata</h2>
-<form id="productdata"
-      onSubmit="JavaScript:saveProduct(event)"
-      class="left">
-  <input type="hidden"
-         name="id"
-         value="¤id¤" />
-  <datalist id="field_suggest"></datalist>
-  <datalist id="tag_suggest"></datalist>
-  <table>
-    <tfoot>
-      <tr>
-        <td>
-        </td>
-        <td>
-          <button id="save"
-                  class="right">
-            Spara
-          </button>
-          <button id="reset"
-                  class="right">
-            Återställ
-          </button>
-        </td>
-      </tr>
-    </tfoot>
-    <tbody>
-      <tr>
-        <td>
-          Namn:
-        </td>
-        <td>
-          <input type="text"
-                 name="name"
-                 value="¤name¤"
-                 onFocus="JavaScript:suggestContent(this)"
-                 list="name_suggest"
-                 autocomplete="off" />
-          <datalist id="name_suggest"></datalist>
-        </td>
-      </tr>
-      <tr>
-        <td>
-          Tillverkare:
-        </td>
-        <td>
-          <input type="text"
-                 name="brand"
-                 value="¤brand¤"
-                 onFocus="JavaScript:suggestContent(this)"
-                 list="brand_suggest"
-                 autocomplete="off" />
-          <datalist id="brand_suggest"></datalist>
-        </td>
-      </tr>
-      <tr>
-        <td>
-          Fakturanummer:
-        </td>
-        <td>
-          <input type="text"
-                 name="invoice"
-                 value="¤invoice¤" />
-        </td>
-      </tr>
-      <tr id="before_info">
-        <td>
-          Serienummer:
-        </td>
-        <td>
-          <input type="text"
-                 name="serial"
-                 value="¤serial¤" />
-        </td>
-      </tr>
-      ¤info¤
-      <tr>
-        <td>
-          <input onKeyPress="JavaScript:addField(event)"
-                 onFocus="JavaScript:suggest(this, 'field')"
-                 list="field_suggest"
-                 autocomplete="off"
-                 class="newfield"
-                 type="text"
-                 name="new_key"
-                 placeholder="Nytt fält" />
-          <button class="minibutton"
-                  onClick="addField(event)">
-            +
-          </button>
-        </td>
-        <td>
-        </td>
-      </tr>
-      <tr>
-        <td>
-          Taggar:
-        </td>
-        <td id="tags">
-          ¤tags¤
-          <input onKeyPress="JavaScript:addTag(event)"
-                 onFocus="JavaScript:suggest(this, 'tag')"
-                 list="tag_suggest"
-                 autocomplete="off"
-                 class="newtag"
-                 type="text"
-                 name="new_tag"
-                 placeholder="Ny tagg" />
-          <button class="minibutton"
-                  onClick="JavaScript:addTag(event)">
-            +
-          </button>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-</form>
-¤label¤
-<div class="clear"></div>
-<form class="¤hidden¤">
-  <input type="hidden"
-         name="id"
-         value="¤id¤" />
-  <button onClick="JavaScript:discardProduct(event)">
-    Skrota artikel
-  </button>
-  <button onClick="JavaScript:toggleService(event)">
-    ¤service¤
-  </button>
-</form>
+<div id="product-details">
+  <h2>Artikeldata</h2>
+  <form id="product-data"
+        onSubmit="JavaScript:saveProduct(event)"
+        class="data">
+    <input type="hidden"
+           name="id"
+           value="¤id¤" />
+    <datalist id="field_suggest"></datalist>
+    <datalist id="tag_suggest"></datalist>
+    <table>
+      <tfoot>
+        <tr>
+          <td>
+          </td>
+          <td>
+            <button id="save"
+                    class="right">
+              Spara
+            </button>
+            <button id="reset"
+                    class="right">
+              Återställ
+            </button>
+          </td>
+        </tr>
+      </tfoot>
+      <tbody>
+        <tr>
+          <td>
+            Namn:
+          </td>
+          <td>
+            <input type="text"
+                   name="name"
+                   value="¤name¤"
+                   onFocus="JavaScript:suggestContent(this)"
+                   list="name_suggest"
+                   autocomplete="off" />
+            <datalist id="name_suggest"></datalist>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            Tillverkare:
+          </td>
+          <td>
+            <input type="text"
+                   name="brand"
+                   value="¤brand¤"
+                   onFocus="JavaScript:suggestContent(this)"
+                   list="brand_suggest"
+                   autocomplete="off" />
+            <datalist id="brand_suggest"></datalist>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            Fakturanummer:
+          </td>
+          <td>
+            <input type="text"
+                   name="invoice"
+                   value="¤invoice¤" />
+          </td>
+        </tr>
+        <tr id="before_info">
+          <td>
+            Serienummer:
+          </td>
+          <td>
+            <input type="text"
+                   name="serial"
+                   value="¤serial¤" />
+          </td>
+        </tr>
+        ¤info¤
+        <tr>
+          <td>
+            <input onKeyPress="JavaScript:addField(event)"
+                   onFocus="JavaScript:suggest(this, 'field')"
+                   list="field_suggest"
+                   autocomplete="off"
+                   class="newfield"
+                   type="text"
+                   name="new_key"
+                   placeholder="Nytt fält" />
+            <button class="minibutton"
+                    onClick="addField(event)">
+              +
+            </button>
+          </td>
+          <td>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            Taggar:
+          </td>
+          <td id="tags">
+            ¤tags¤
+            <input onKeyPress="JavaScript:addTag(event)"
+                   onFocus="JavaScript:suggest(this, 'tag')"
+                   list="tag_suggest"
+                   autocomplete="off"
+                   class="newtag"
+                   type="text"
+                   name="new_tag"
+                   placeholder="Ny tagg" />
+            <button class="minibutton"
+                    onClick="JavaScript:addTag(event)">
+              +
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </form>
+  <form id="product-actions"
+        class="¤hidden¤">
+    <input type="hidden"
+           name="id"
+           value="¤id¤" />
+    <button onClick="JavaScript:discardProduct(event)">
+      Skrota artikel
+    </button>
+    <button onClick="JavaScript:toggleService(event)">
+      ¤service¤
+    </button>
+  </form>
+</div>
+<div id="product-history"
+     class="¤hidden¤">
+  <h2>Artikelhistorik</h2>
+  ¤history¤
+</div>
+<!--
+<div id="product-attachments"
+     class="¤hidden¤">
+  <h2>Bilagor</h2>
+  ¤attachments¤
+  <form id="attachment_upload"
+        onSubmit="JavaScript:uploadAttachment(event)">
+    <input type="hidden"
+           name="id"
+           value="¤id¤" />
+    <input id="uploadfile"
+           name="uploadfile"
+           type="file"
+           onchange="show_file(event)"/>
+    <input id="filename"
+           name="filename"
+           type="text"
+           placeholder="Välj en fil..."
+           onclick="select_file(event)"
+           readonly />
+    <button>Ladda upp</button>
+  </form>
+</div>
+-->
+<div id="product-label"
+     class="¤hidden¤">
+  <h2>Etikett</h2>
+  ¤label¤
+</div>
+
+¤¤ attachment_list ¤¤
+<ul>
+  ¤attachments¤
+</ul>
+
+¤¤ attachment ¤¤
+<li>
+  <strong>¤name¤</strong>: <a href="./?page=dl&id=¤id¤">Ladda ner</a>
+</li>
 
 ¤¤ product_label ¤¤
-<div class="qr left">
+<div class="qr">
   <a href="./?page=print&id=¤id¤"
      title="Skriv ut">
     <span>¤name¤</span>
@@ -332,75 +383,81 @@
 </p>
 
 ¤¤ user_details ¤¤
-<form onSubmit="JavaScript:updateUser(event)">
-  <input type="hidden"
-         name="id"
-         value="¤id¤" />
-  <table>
-    <tfoot>
-      <tr>
-        <td>
-        </td>
-        <td>
-          <button class="right"
-                  id="save">
-            Spara
-          </button>
-          <button class="right"
-                  id="reset">
-            Återställ
-          </button>
-        </td>
-      </tr>
-    </tfoot>
-    <tbody>
-      <tr>
-        <td>
-          Namn:
-        </td>
-        <td>
+<div id="user-details">
+  <form onSubmit="JavaScript:updateUser(event)">
+    <input type="hidden"
+           name="id"
+           value="¤id¤" />
+    <table>
+      <tfoot>
+        <tr>
+          <td>
+          </td>
+          <td>
+            <button class="right"
+                    id="save">
+              Spara
+            </button>
+            <button class="right"
+                    id="reset">
+              Återställ
+            </button>
+          </td>
+        </tr>
+      </tfoot>
+      <tbody>
+        <tr>
+          <td>
+            Namn:
+          </td>
+          <td>
           <input type="text"
                  value="¤displayname¤"
                  disabled />
-        </td>
-      </tr>
-      <tr>
-        <td>
-          Användarnamn:
-        </td>
-        <td>
-          <input type="text"
-                 name="name"
-                 value="¤name¤" />
-        </td>
-      </tr>
-      <tr>
-        <td>
-          Anteckningar:
-        </td>
-        <td>
-          <textarea name="notes">¤notes¤</textarea>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-</form>
-<form method="GET">
-  <input type="hidden"
-         name="action"
-         value="checkout" />
-  <button name="user"
-          value="¤name¤">
-    Nytt lån
-  </button>
-</form>
-<h2>Aktuella lån</h2>
-¤active_loans¤
-<h2>Gamla lån</h2>
-¤inactive_loans¤
+          </td>
+        </tr>
+        <tr>
+          <td>
+            Användarnamn:
+          </td>
+          <td>
+            <input type="text"
+                   name="name"
+                   value="¤name¤" />
+          </td>
+        </tr>
+        <tr>
+          <td>
+            Anteckningar:
+          </td>
+          <td>
+            <textarea name="notes">¤notes¤</textarea>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </form>
+  <form method="GET">
+    <input type="hidden"
+           name="action"
+           value="checkout" />
+    <button name="user"
+            value="¤name¤">
+      Nytt lån
+    </button>
+  </form>
+</div>
+<div id="active-loans">
+  <h2>Aktuella lån</h2>
+  ¤active_loans¤
+</div>
+<div id="inactive-loans">
+  <h2>Gamla lån</h2>
+  ¤inactive_loans¤
+</div>
 
 ¤¤ history_table ¤¤
-<table>
+<table class="history">
   <thead>
     <tr>
       <th class="status">
@@ -464,76 +521,84 @@
 
 
 ¤¤ checkout_page ¤¤
-<h2>Välj låntagare</h2>
-<form class="dark"
-      action="./"
-      method="GET">
-  <datalist id="user_suggest"></datalist>
-  <input type="hidden"
-         name="page"
-         value="checkout" />
-  <div>
-    <span class="label">
-      Användarnamn:
-    </span>
-    <input onFocus="JavaScript:suggest(this, 'user')"
-           type="text"
+<div id="user-select">
+  <h2>Välj låntagare</h2>
+  <form class="dark"
+        action="./"
+        method="GET">
+    <datalist id="user_suggest"></datalist>
+    <input type="hidden"
+           name="page"
+           value="checkout" />
+    <div>
+      <label for="user">
+        Användarnamn:
+      </label>
+      <input onFocus="JavaScript:suggest(this, 'user')"
+             type="text"
+             name="user"
+             id="user"
+             list="user_suggest"
+             autocomplete="off"
+             placeholder="Användarnamn"
+             value="¤user¤"
+             required />
+      <button type="submit" >
+        Välj
+      </button>
+    </div>
+    <div>
+      <label for="displayname">
+        Namn:
+      </label>
+      <input type="text"
+             name="displayname"
+             id="displayname"
+             value="¤displayname¤"
+             disabled />
+    </div>
+    <div>
+      <label for="notes">
+        Anteckningar:
+      </label>
+      <textarea name="notes"
+                id="notes"
+                disabled>¤notes¤</textarea>
+    </div>
+  </form>
+</div>
+<div id="product-checkout">
+  <h2>Låna ut artikel</h2>
+  <form class="light"
+        onSubmit="JavaScript:checkoutProduct(event)">
+    <input type="hidden"
+           name="page"
+           value="checkout" />
+    <input type="hidden"
            name="user"
-           list="user_suggest"
-           autocomplete="off"
-           placeholder="Användarnamn"
-           value="¤user¤"
-           required />
-    <button type="submit" >
-      Välj
-    </button>
-  </div>
-  <div>
-    <span class="label">
-      Namn:
-    </span>
+           value="¤user¤">
+    <label for="product">Artikel:</label>
     <input type="text"
-           name="displayname"
-           value="¤displayname¤"
-           disabled />
-  </div>
-  <div>
-    <span class="label">
-      Anteckningar:
-    </span>
-    <textarea name="notes"
-              disabled>¤notes¤</textarea>
-  </div>
-</form>
-<h2>Låna ut artikel</h2>
-<form class="light"
-      onSubmit="JavaScript:checkoutProduct(event)">
-  <input type="hidden"
-         name="page"
-         value="checkout" />
-  <input type="hidden"
-         name="user"
-         value="¤user¤">
-  <span class="label">Artikel:</span>
-  <input type="text"
-         name="product"
-         placeholder="Serienummer"
-         required
-         ¤disabled¤ />
-  <button>
+           id="product"
+           name="product"
+           placeholder="Serienummer"
+           required
+           ¤disabled¤ />
+    <button>
       Låna ut
-  </button>
-  <br/>
-  <span class="label">Slutdatum:</span>
-  <input type="text"
-         id="end"
-         onClick="JavaScript:calendar(event)"
-         name="end"
-         value="¤end¤"
-         ¤disabled¤ />
-</form>
-¤subtitle¤
-¤loan_table¤
+    </button>
+    <br/>
+    <label for="end">Slutdatum:</label>
+    <input type="text"
+           id="end"
+           onClick="JavaScript:calendar(event)"
+           name="end"
+           value="¤end¤"
+           ¤disabled¤ />
+  </form>
+  ¤subtitle¤
+  ¤loan_table¤
+</div>
 
 ¤¤ inventory_start ¤¤
 <form class="dark"
@@ -544,7 +609,9 @@
 </form>
 
 ¤¤ inventory_do ¤¤
-<p class="dark">
+
+<div id="inventory-overview"
+     class="dark">
   <span class="label">
     Startdatum:
   </span>
@@ -567,28 +634,39 @@
       Avsluta inventering
     </button>
   </form>
-</p>
-<form class="light ¤hide¤"
+</div>
+<form id="inventory-register"
+      class="light ¤hide¤"
       onSubmit="JavaScript:inventoryProduct(event)">
-  <span class="label">
+  <label for="serial">
     Artikel:
-  </span>
+  </label>
   <input type="text"
          name="serial"
+         id="serial"
          placeholder="Serienummer" />
   <button>
     Registrera
   </button>
 </form>
+<div id="unseen-products">
+  <h2>¤unseen_title¤</h2>
+  ¤unseen¤
+</div>
+<div id="seen-products">
+  <h2>Inventerade artiklar</h2>
+  ¤seen¤
+</div>
 
 ¤¤ return_page ¤¤
 <form class="dark"
       onSubmit="JavaScript:returnProduct(event)">
-  <span class="label">
+  <label for="serial">
     Artikel:
-  </span>
+  </label>
   <input type="text"
          name="serial"
+         id="serial"
          placeholder="Serienummer"
          required />
   <button>
@@ -597,7 +675,7 @@
 </form>
 
 ¤¤ inventory_table ¤¤
-<table>
+<table id="inventory-history">
   <thead>
     <tr>
       <th>
@@ -646,17 +724,18 @@
 </tr>
 
 ¤¤ search_form ¤¤
-
 <form onSubmit="JavaScript:doSearch(event)"
       id="search"
       class="dark">
   <p>
+    <label for="q">Sökterm:</label>
     <input type="hidden"
            name="page"
            value="search" />
     <input type="text"
            onKeyPress="JavaScript:searchInput(event)"
            name="q"
+           id="q"
            placeholder="Vad letar du efter?"
            value=""
            autofocus />
@@ -669,10 +748,19 @@
   </div>
   <div class="clear"></div>
 </form>
-<p>
+<p id="hints">
   Du kan göra mer avancerade sökningar genom att börja med ett nyckelord avslutat med kolon, ex: <strong>serienummer:123456</strong> eller <strong>tag:dator</strong>
 </p>
-
+<div id="found-products"
+     class="¤hide¤">
+  <h2>Artiklar</h2>
+  ¤product_results¤
+</div>
+<div id="found-users"
+     class="¤hide¤">
+  <h2>Användare</h2>
+  ¤user_results¤
+</div>
 
 ¤¤ search_term ¤¤
 

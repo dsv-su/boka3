@@ -22,7 +22,7 @@ class HistoryPage extends Page {
                 $this->subtitle = 'Inventeringsdetaljer';
                 break;
             case 'list':
-                $this->subtitle = 'Genomförda inventeringar';
+                $this->subtitle = 'Historik';
                 break;
         }
     }
@@ -30,9 +30,11 @@ class HistoryPage extends Page {
     protected function render_body() {
         switch($this->action) {
             case 'list':
+                print(replace(array('title' => 'Genomförda inventeringar'),
+                              $this->fragments['subtitle']));
                 print($this->build_inventory_table());
                 print(replace(array('title' => 'Skrotade artiklar'),
-                              $this->fragments['title']));
+                              $this->fragments['subtitle']));
                 $discards = get_items('product_discarded');
                 if($discards) {
                     print($this->build_product_table($discards));

@@ -48,8 +48,9 @@ class ProductPage extends Page {
     protected function render_body() {
         switch($this->action) {
             case 'list':
-                print($this->fragments['create_product']);
-                print($this->build_product_table(get_items('product')));
+                $products = $this->build_product_table(get_items('product'));
+                print(replace(array('product_table' => $products),
+                              $this->fragments['product_page']));
                 break;
             case 'show':
                 print($this->build_product_details());
@@ -73,16 +74,22 @@ class ProductPage extends Page {
             $tags .= replace(array('tag' => ucfirst($tag)),
                              $this->fragments['tag']);
         }
-        $fields = array('id' => $this->product->get_id(),
-                        'brand' => $this->product->get_brand(),
-                        'name' => $this->product->get_name(),
-                        'serial' => $this->product->get_serial(),
-                        'invoice' => $this->product->get_invoice(),
-                        'tags' => $tags,
-                        'info' => $info,
-                        'label' => '',
-                        'hidden' => 'hidden',
-                        'service' => 'Starta service');
+        $history = $this->build_history_table($this->product->get_history());
+        $attachments = $this->build_attachment_list(
+            $this->product->get_attachments());
+        $fields = array('id'          => $this->product->get_id(),
+                        'brand'       => $this->product->get_brand(),
+                        'name'        => $this->product->get_name(),
+                        'serial'      => $this->product->get_serial(),
+                        'invoice'     => $this->product->get_invoice(),
+                        'tags'        => $tags,
+                        'info'        => $info,
+                        'label'       => '',
+                        'hidden'      => 'hidden',
+                        'service'     => 'Starta service',
+                        'history'     => $history,
+                        'attachments' => $attachments);
+        $attachments = $this->product->get_attachments();
         if(class_exists('QRcode')) {
             $fields['label'] = replace($fields,
                                        $this->fragments['product_label']);
@@ -93,16 +100,60 @@ class ProductPage extends Page {
                 $fields['service'] = 'Avsluta service';
             }
         }
-        $out = replace($fields, $this->fragments['product_details']);
-        $out .= replace(array('title' => 'Artikelhistorik'),
-                        $this->fragments['subtitle']);
-        $history_table = 'Ingen historik att visa.';
-        $history = $this->product->get_history();
-        if($history) {
-            $history_table = $this->build_product_history_table($history);
+        return replace($fields, $this->fragments['product_details']);
+    }
+
+    private function build_history_table($history) {
+        if(!$history) {
+            return 'Ingen historik att visa.';
         }
-        $out .= $history_table;
-        return $out;
+        $rows = '';
+        foreach($history as $event) {
+            $status = $event->get_status();
+            $itemlink = 'Service';
+            $start = $event->get_starttime();
+            $end = $event->get_returntime();
+            $note = '';
+            if($event instanceof Loan) {
+                $user = $event->get_user();
+                $product = $event->get_product();
+                $itemlink = replace(array('id' => $user->get_id(),
+                                          'name' => $user->get_name(),
+                                          'page' => 'users'),
+                                    $this->fragments['item_link']);
+                if(!$end) {
+                    $end = $event->get_endtime();
+                    $extend = format_date(default_loan_end(time()));
+                    $note = replace(array('id' => $product->get_id(),
+                                      'end_new' => $extend),
+                                $this->fragments['loan_extend_form']);
+                }
+            }
+            $rows .= replace(array('status' => $status,
+                                   'item_link' => $itemlink,
+                                   'start_date' => format_date($start),
+                                   'end_date' => format_date($end),
+                                   'note' => $note),
+                             $this->fragments['history_row']);
+        }
+        return replace(array('rows' => $rows,
+                             'item' => 'Låntagare'),
+                       $this->fragments['history_table']);
+    }
+
+
+    private function build_attachment_list($attachments) {
+        if(!$attachments) {
+            return 'Inga bilagor.';
+        }
+        $items = '';
+        foreach($attachments as $attachment) {
+            $items .= replace(array('name' => $attachment->get_name(),
+                                    'id'   => $attachments->get_id()),
+                              $this->fragments['attachment']);
+        }
+        return replace(array('attachments' => $items),
+                       $this->fragments['attachment_list']);
     }
 
     private function build_new_page() {

@@ -150,15 +150,17 @@ abstract class Page extends Responder {
                 case 'overdue':
                     $loan = $product->get_active_loan();
                     $user = $loan->get_user();
-                    $userlink = replace(array('name' => $user->get_displayname(),
-                                              'id' => $user->get_id(),
-                                              'page' => 'users'),
+                    $replacements = array('name' => $user->get_displayname(),
+                                          'id'   => $user->get_id(),
+                                          'page' => 'users');
+                    $userlink = replace($replacements,
                                         $this->fragments['item_link']);
                     $note = 'Utlånad till '.$userlink;
                     if($loan->is_overdue()) {
                         $note .= ', försenad';
                     } else {
-                        $note .= ', slutdatum '.format_date($loan->get_endtime());
+                        $note .= ', slutdatum '
+                                .format_date($loan->get_endtime());
                     }
                     break;
             }
@@ -202,42 +204,6 @@ abstract class Page extends Responder {
         }
         return replace(array('rows' => $rows,
                              'item' => 'Artikel'),
-                       $this->fragments['history_table']);
-    }
-
-    final protected function build_product_history_table($history) {
-        $rows = '';
-        foreach($history as $event) {
-            $status = $event->get_status();
-            $itemlink = 'Service';
-            $start = $event->get_starttime();
-            $end = $event->get_returntime();
-            $note = '';
-            if($event instanceof Loan) {
-                $user = $event->get_user();
-                $product = $event->get_product();
-                $itemlink = replace(array('id' => $user->get_id(),
-                                          'name' => $user->get_name(),
-                                          'page' => 'users'),
-                                    $this->fragments['item_link']);
-                if(!$end) {
-                    $end = $event->get_endtime();
-                    $extend = format_date(default_loan_end(time()));
-                    $note = replace(array('id' => $product->get_id(),
-                                      'end_new' => $extend),
-                                $this->fragments['loan_extend_form']);
-                }
-            }
-            $rows .= replace(array('status' => $status,
-                                   'item_link' => $itemlink,
-                                   'start_date' => format_date($start),
-                                   'end_date' => format_date($end),
-                                   'note' => $note),
-                             $this->fragments['history_row']);
-            
-        }
-        return replace(array('rows' => $rows,
-                             'item' => 'Låntagare'),
                        $this->fragments['history_table']);
     }
 
@@ -315,26 +281,22 @@ abstract class Page extends Responder {
             $missing = 'Kvarvarande artiklar';
             $hidden = '';
         }
-        $out = replace(array('start_date' => $startdate,
+        $unseen_table = 'Inga artiklar saknas.';
+        if($unseen) {
+            $unseen_table = $this->build_product_table($unseen);
+        }
+        $seen_table = 'Inga artiklar inventerade.';
+        if($seen) {
+            $seen_table = $this->build_seen_table($seen, $inventory);
+        }
+        return replace(array('start_date' => $startdate,
                              'total_count' => count($all_products),
                              'seen_count' => count($seen),
-                             'hide' => $hidden),
+                             'hide' => $hidden,
+                             'unseen_title' => $missing,
+                             'unseen' => $unseen_table,
+                             'seen' => $seen_table),
                        $this->fragments['inventory_do']);
-        $out .= replace(array('title' => $missing),
-                        $this->fragments['subtitle']);
-        if($unseen) {
-            $out .= $this->build_product_table($unseen);
-        } else {
-            $out .= 'Inga artiklar saknas.';
-        }
-        $out .= replace(array('title' => 'Inventerade artiklar'),
-                        $this->fragments['subtitle']);
-        if($seen) {
-            $out .= $this->build_seen_table($seen, $inventory);
-        } else {
-            $out .= 'Inga artiklar inventerade.';
-        }
-        return $out;
     }
 }
 ?>

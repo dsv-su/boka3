@@ -1,6 +1,8 @@
 <?php
 class SearchPage extends Page {
     private $terms = array();
+    private $product_hits = array();
+    private $user_hits = array();
     
     public function __construct() {
         parent::__construct();
@@ -8,7 +10,17 @@ class SearchPage extends Page {
         if(isset($_GET['q']) && !$_GET['q']) {
             unset($_GET['q']);
         }
-        $this->terms = $_GET;
+        $this->terms = $this->translate_terms($_GET);
+        if($this->terms) {
+            $this->subtitle = 'Sökresultat';
+            $hits = $this->do_search();
+            if(isset($hits['product'])) {
+                $this->product_hits = $hits['product'];
+            }
+            if(isset($hits['user'])) {
+                $this->user_hits = $hits['user'];
+            }
+        }
     }
     
     private function do_search() {
@@ -17,7 +29,7 @@ class SearchPage extends Page {
             return $out;
         }
         foreach(array('user', 'product') as $type) {
-            $result = $this->search($type, $this->translate_keys($this->terms));
+            $result = $this->search($type, $this->terms);
             if($result) {
                 $out[$type] = $result;
             }
@@ -25,7 +37,14 @@ class SearchPage extends Page {
         return $out;
     }
 
-    private function translate_keys($terms) {
+    private function translate_terms($terms) {
+        $matches = array();
+        if(isset($terms['q']) && preg_match('/([^:]+):(.*)/',
+                                            $terms['q'],
+                                            $matches)) {
+            unset($terms['q']);
+            $terms[$matches[1]] = $matches[2];
+        }
         $translated = array();
         foreach($terms as $key => $value) {
             $newkey = $key;
@@ -121,14 +140,14 @@ class SearchPage extends Page {
     }
     
     protected function render_body() {
+        $hidden = 'hidden';
         $terms = '';
-        foreach($this->terms as $key => $value) {
-            if(!is_array($value)) {
-                $terms .= replace(array('term' => ucfirst($key).": $value",
-                                        'key' => $key,
-                                        'value' => $value),
-                                  $this->fragments['search_term']);
-            } else {
+        if($this->terms) {
+            $hidden = '';
+            foreach($this->terms as $key => $value) {
+                if(!is_array($value)) {
+                    $value = array($value);
+                }
                 foreach($value as $item) {
                     $terms .= replace(array('term' => ucfirst($key).": $item",
                                             'key' => $key,
@@ -137,28 +156,19 @@ class SearchPage extends Page {
                 }
             }
         }
-        print(replace(array('terms' => $terms),
-                      $this->fragments['search_form']));
-        if($this->terms) {
-            $hits = $this->do_search();
-            print(replace(array('title' => 'Sökresultat'),
-                          $this->fragments['title']));
-            $result = '';
-            if(isset($hits['user'])) {
-                $result = replace(array('title' => 'Låntagare'),
-                                  $this->fragments['subtitle']);
-                $result .= $this->build_user_table($hits['user']);
-            }
-            if(isset($hits['product'])) {
-                $result .= replace(array('title' => 'Artiklar'),
-                                   $this->fragments['subtitle']);
-                $result .= $this->build_product_table($hits['product']);
-            }
-            if(!$result) {
-                $result = 'Inga träffar.';
-            }
-            print($result);
+        $products = 'Inga artiklar hittade.';
+        if($this->product_hits) {
+            $products = $this->build_product_table($this->product_hits);
         }
+        $users = 'Inga användare hittade.';
+        if($this->user_hits) {
+            $users = $this->build_user_table($this->user_hits);
+        }
+        print(replace(array('terms' => $terms,
+                            'hidden' => $hidden,
+                            'product_results' => $products,
+                            'user_results' => $users),
+                      $this->fragments['search_form']));
     }
 }
 ?>

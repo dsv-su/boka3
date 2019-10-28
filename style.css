@@ -28,7 +28,7 @@ textarea {
     padding-left: 2px;
 }
 
-.label {
+.label, label {
     display: inline-block;
     min-width: 100px;
 }
@@ -151,6 +151,82 @@ input[type="text"].newtemplate {
     background-color: #ebf0f5;
     margin: 5px;
     padding-left: 2px;
+}
+
+#uploadfile {
+    display: none;
+}
+
+h1 {
+    grid-area: header;
+}
+
+#product-details {
+    grid-column: col 1 / col 2;
+    grid-row: row 1 / row 3;
+}
+
+#user-select {
+    grid-area: first;
+}
+
+#user-table {
+    grid-area: first;
+}
+
+#user-details {
+    grid-area: first;
+}
+
+#active-loans {
+    grid-area: third;
+}
+
+#inactive-loans {
+    grid-area: fourth;
+}
+
+#product-checkout {
+    grid-area: third;
+}
+
+#product-create {
+    grid-area: first;
+}
+
+#product-table {
+    grid-area: first;
+}
+
+#unseen-products {
+    grid-area: third;
+}
+
+#seen-products {
+    grid-area: fourth;
+}
+
+#inventory-register {
+    grid-area: second;
+}
+
+#inventory-overview {
+    grid-area: first;
+}
+
+#inventory-history {
+    grid-area: third;
+}
+
+#search {
+    grid-column: col 1 / col 3;
+    grid-row: row 1 / row 2;
+    justify-self: stretch;
+}
+
+#hints {
+    grid-column: col 1 / col 3;
+    grid-row: row 2 / row 3;
 }
 
 .qr {

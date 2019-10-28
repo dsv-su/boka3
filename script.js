@@ -357,7 +357,7 @@ function loadTemplate(event) {
 
 function saveTemplate(event) {
     event.preventDefault()
-    var datalist = productDataList(document.querySelector('#productdata'))
+    var datalist = productDataList(document.querySelector('#product-data'))
     datalist.push(['template', event.currentTarget.form.template.value])
     ajaxRequest('savetemplate', datalist, showResult)
 }
@@ -510,4 +510,14 @@ function removeTerm(event) {
     var term = event.currentTarget.parentNode
     var parent = term.parentNode
     parent.remove(term)
+}
+
+function selectFile(event) {
+    var fileinput = document.getElementById("uploadfile")
+    fileinput.click()
+}
+
+function showFile(event) {
+    var filefield = document.getElementById("filename")
+    filefield.value = event.currentTarget.files[0].name
 }

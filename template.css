@@ -354,6 +354,13 @@ button:disabled, input[type="submit"]:disabled {
 
 #contents {
     display: grid;
-    grid-template-columns: minmax(min-content, max-content);
+    grid-template-columns: [col] auto [col] auto [col];
+    grid-template-rows: auto [row] repeat(3, auto [row]);
+    grid-template-areas: "header header"
+                             "first second"
+                             "third fourth"
+                             "fifth sixth";
     grid-gap: 1rem;
+    justify-items: start;
+    align-items: start;
 }

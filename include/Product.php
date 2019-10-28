@@ -401,5 +401,9 @@ class Product {
         }
         return $out;
     }
+
+    public function get_attachments() {
+        return array();
+    }
 }
 ?>
