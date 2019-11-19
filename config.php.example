@@ -18,4 +18,11 @@ $error_address = 'root@example.com';
 #$notify_discard = 'inventory-tracking@example.com';
 $discard_notify = false;
 
+# Directory to save attachments to
+# Interpreted as absolute path if beginning with /,
+# otherwise assumed to be relative to the application root.
+# Must be writable by the web server.
+# Does not need to be within the web root.
+$files_dir = 'attachments';
+
 ?>

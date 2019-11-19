@@ -2,18 +2,7 @@ function ajaxRequest(action, datalist, callback) {
     var request = false
     request = new XMLHttpRequest()
     request.open('POST', "./?page=ajax&action=" + action, true)
-    request.setRequestHeader('Content-Type',
-                             'application/x-www-form-urlencoded')
-    var datastring = ''
-    var first = true
-    for(let [key, value] of datalist) {
-        if(!first) {
-            datastring += '&'
-        }
-        datastring += key + '=' + encodeURIComponent(value)
-        first = false
-    }
-    request.send(datastring)
+    request.send(datalist)
 
     request.onreadystatechange = function() {
         if (request.readyState == 4) {
@@ -83,12 +72,18 @@ function fixDuplicateInputNames(fields) {
 }
 
 function dataListFromForm(form, filter = function(field) {return true}) {
-    var out = []
+    var out = new FormData()
     var fields = form.querySelectorAll('input,textarea')
     fixDuplicateInputNames(fields)
     for(var i = 0; i < fields.length; i++) {
-        if(filter(fields[i])) {
-            out.push([fields[i].name, fields[i].value])
+        var field = fields[i]
+        if(filter(field)) {
+            if(field.type == 'file') {
+                var file = field.files[0]
+                out.append(field.name, file, file.name)
+            } else {
+                out.append(field.name, field.value)
+            }
         }
     }
     return out
@@ -103,9 +98,9 @@ function getFragment(name, callback) {
         }
     }
     
-    ajaxRequest('getfragment',
-                [['fragment', name]],
-                unpack)
+    var data = new FormData()
+    data.append('fragment', name)
+    ajaxRequest('getfragment', data, unpack)
 }
 
 function replace(fragment, replacements) {
@@ -158,12 +153,12 @@ function extendLoan(event) {
 
 function startInventory(event) {
     event.preventDefault()
-    ajaxRequest('startinventory', [], reloadOrError)
+    ajaxRequest('startinventory', new FormData(), reloadOrError)
 }
 
 function endInventory(event) {
     event.preventDefault()
-    ajaxRequest('endinventory', [], reloadOrError)
+    ajaxRequest('endinventory', new FormData(), reloadOrError)
 }
 
 function inventoryProduct(event) {
@@ -220,7 +215,9 @@ function suggest(input, type) {
             suggestlist.appendChild(next)
         }
     }
-    ajaxRequest('suggest', [['type', type]], render)
+    data = new FormData()
+    data.append('type', type)
+    ajaxRequest('suggest', data, render)
 }
 
 function suggestContent(input) {
@@ -236,7 +233,9 @@ function suggestContent(input) {
             suggestlist.appendChild(next)
         }
     }
-    ajaxRequest('suggestcontent', [['fieldname', input.name]], render)
+    data = new FormData()
+    data.append('fieldname', input.name)
+    ajaxRequest('suggestcontent', data, render)
 }
 
 function addField(event) {
@@ -414,6 +413,59 @@ function updateUser(event) {
     ajaxRequest('updateuser', dataListFromForm(form), reloadOrError)
 }
 
+function uploadAttachment(event) {
+    event.preventDefault()
+    var form = event.currentTarget
+    var render = function(result) {
+        if(result.type != 'success') {
+            showResult(result)
+            return
+        }
+        var classvalue = 'attachment-list'
+        var list = form.parentNode.querySelector('.'+classvalue)
+        if(list == null) {
+            list = document.createElement('ul')
+            list.classList.add(classvalue)
+            var p = form.parentNode.querySelector('p')
+            p.replaceWith(list)
+        }
+        var temp = document.createElement('template')
+        temp.innerHTML = result.message
+        list.appendChild(temp.content.firstChild)
+    }
+    var filter = function(input) {
+        if(input.name == 'filename') {
+            return false;
+        }
+        return true;
+    }
+    ajaxRequest('addattachment', dataListFromForm(form, filter), render)
+}
+
+function deleteAttachment(event) {
+    event.preventDefault()
+    var form = event.currentTarget
+    var node = form.parentNode
+    var name = form.name.value
+    if(window.confirm("Är du säker på att du vill ta bort bilagan '"
+                      +name+"'?")) {
+        var render = function(result) {
+            if(result.type == 'success') {
+                var list = node.parentNode
+                list.removeChild(node)
+                if(list.childElementCount == 0) {
+                    var p = document.createElement('p')
+                    p.append('Inga bilagor.')
+                    list.replaceWith(p)
+                }
+            } else {
+                showResult(result);
+            }
+        }
+        ajaxRequest('deleteattachment', dataListFromForm(form), render)
+    }
+}
+
 function productDataList(form) {
     var filter = function(input) {
         var name = input.name
@@ -513,11 +565,11 @@ function removeTerm(event) {
 }
 
 function selectFile(event) {
-    var fileinput = document.getElementById("uploadfile")
+    var fileinput = event.currentTarget.parentNode.uploadfile
     fileinput.click()
 }
 
 function showFile(event) {
-    var filefield = document.getElementById("filename")
+    var filefield = event.currentTarget.parentNode.filename
     filefield.value = event.currentTarget.files[0].name
 }

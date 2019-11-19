@@ -97,6 +97,8 @@ function make_page($page) {
             return new QR();
         case 'print':
             return new Printer();
+        case 'dl':
+            return new Download();
     }
 }
 

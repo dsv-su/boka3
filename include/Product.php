@@ -21,8 +21,8 @@ class Product {
         $now = time();
         begin_trans();
         try {
-            $stmt = 'insert into
-                         `product`(`brand`, `name`, `invoice`, `serial`, `createtime`)
+            $stmt = 'insert into `product`
+                         (`brand`, `name`, `invoice`, `serial`, `createtime`)
                          values (?, ?, ?, ?, ?)';
             $ins_prod = prepare($stmt);
             bind($ins_prod, 'ssssi', $brand, $name, $invoice, $serial, $now);
@@ -403,7 +403,17 @@ class Product {
     }
 
     public function get_attachments() {
-        return array();
+        $out = array();
+        $find = prepare('select `id` from `attachment`
+                         where `product`=? and `deletetime` is NULL
+                             order by `uploadtime` asc');
+        bind($find, 'i', $this->id);
+        execute($find);
+        $items = result_list($find);
+        foreach($items as $item) {
+            $out[] = new Attachment($item['id']);
+        }
+        return $out;
     }
 }
 ?>

@@ -5,27 +5,35 @@ abstract class Responder {
     public function __construct() {
         $this->fragments = get_fragments('./html/fragments.html');
     }
-
+    
     final protected function escape_tags($tags) {
         foreach($tags as $key => $tag) {
-            $tags[$key] = str_replace(array("'",
-                                            '"'),
-                                      array('&#39;',
-                                            '&#34;'),
-                                      strtolower($tag));
+            $tags[$key] = $this->escape_string(strtolower($tag));
         }
         return $tags;
     }
     
     final protected function unescape_tags($tags) {
         foreach($tags as $key => $tag) {
-            $tags[$key] = str_replace(array('&#39;',
-                                            '&#34;'),
-                                      array("'",
-                                            '"'),
-                                      strtolower($tag));
+            $tags[$key] = $this->unescape_string(strtolower($tag));
         }
         return $tags;
+    }
+    
+    final protected function escape_string($string) {
+        return str_replace(array("'",
+                                 '"'),
+                           array('&#39;',
+                                 '&#34;'),
+                           $string);
+    }
+
+    final protected function unescape_string($string) {
+        return str_replace(array('&#39;',
+                                 '&#34;'),
+                           array("'",
+                                 '"'),
+                           $string);
     }
 }
 ?>

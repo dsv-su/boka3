@@ -59,6 +59,13 @@ class Ajax extends Responder {
                 break;
             case 'toggleservice':
                 $out = $this->toggle_service();
+                break;
+            case 'addattachment':
+                $out = $this->add_attachment();
+                break;
+            case 'deleteattachment':
+                $out = $this->delete_attachment();
+                break;
         }
         print($out->toJson());
     }
@@ -379,6 +386,32 @@ class Ajax extends Responder {
         } catch(Exception $e) {
             return new Failure('Service kan inte registreras '
                               .'på den här artikeln nu.');
+        }
+    }
+
+    private function add_attachment() {
+        try {
+            $product = new Product($_POST['id']);
+            $uploadfile = $_FILES['uploadfile'];
+            $attach = Attachment::create($uploadfile, $product->get_id());
+            $date = format_date($attach->get_uploadtime());
+            $fragment = replace(array('name' => $attach->get_filename(),
+                                      'id' => $attach->get_id(),
+                                      'date' => $date),
+                                $this->fragments['attachment']);
+            return new Success($fragment);
+        } catch(Exception $e) {
+            return new Failure($e->getMessage());
+        }
+    }
+
+    private function delete_attachment() {
+        $attach = new Attachment($_POST['id']);
+        try {
+            $attach->delete();
+            return new Success('');
+        } catch(Exception $e) {
+            return new Failure($e->getMessage());
         }
     }
 }

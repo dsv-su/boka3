@@ -280,12 +280,6 @@
     </button>
   </form>
 </div>
-<div id="product-history"
-     class="¤hidden¤">
-  <h2>Artikelhistorik</h2>
-  ¤history¤
-</div>
-<!--
 <div id="product-attachments"
      class="¤hidden¤">
   <h2>Bilagor</h2>
@@ -298,17 +292,21 @@
     <input id="uploadfile"
            name="uploadfile"
            type="file"
-           onchange="show_file(event)"/>
+           onchange="showFile(event)"/>
     <input id="filename"
            name="filename"
            type="text"
            placeholder="Välj en fil..."
-           onclick="select_file(event)"
+           onclick="selectFile(event)"
            readonly />
     <button>Ladda upp</button>
   </form>
 </div>
--->
+<div id="product-history"
+     class="¤hidden¤">
+  <h2>Artikelhistorik</h2>
+  ¤history¤
+</div>
 <div id="product-label"
      class="¤hidden¤">
   <h2>Etikett</h2>
@@ -316,13 +314,23 @@
 </div>
 
 ¤¤ attachment_list ¤¤
-<ul>
+<ul class="attachment-list">
   ¤attachments¤
 </ul>
 
 ¤¤ attachment ¤¤
 <li>
-  <strong>¤name¤</strong>: <a href="./?page=dl&id=¤id¤">Ladda ner</a>
+  <strong>¤name¤</strong> (¤date¤): <a href="./?page=dl&id=¤id¤">Ladda ner</a>
+  <br/>
+  <form onSubmit="JavaScript:deleteAttachment(event)">
+    <input type="hidden"
+           name="id"
+           value="¤id¤" />
+    <input type="hidden"
+           name="name"
+           value="¤name¤" />
+    <button>Ta bort</button>
+  </form>
 </li>
 
 ¤¤ product_label ¤¤

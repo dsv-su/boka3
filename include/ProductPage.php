@@ -89,7 +89,6 @@ class ProductPage extends Page {
                         'service'     => 'Starta service',
                         'history'     => $history,
                         'attachments' => $attachments);
-        $attachments = $this->product->get_attachments();
         if(class_exists('QRcode')) {
             $fields['label'] = replace($fields,
                                        $this->fragments['product_label']);
@@ -144,12 +143,14 @@ class ProductPage extends Page {
 
     private function build_attachment_list($attachments) {
         if(!$attachments) {
-            return 'Inga bilagor.';
+            return '<p>Inga bilagor.</p>';
         }
         $items = '';
         foreach($attachments as $attachment) {
-            $items .= replace(array('name' => $attachment->get_name(),
-                                    'id'   => $attachments->get_id()),
+            $date = format_date($attachment->get_uploadtime());
+            $items .= replace(array('name' => $attachment->get_filename(),
+                                    'id'   => $attachment->get_id(),
+                                    'date' => $date),
                               $this->fragments['attachment']);
         }
         return replace(array('attachments' => $items),
