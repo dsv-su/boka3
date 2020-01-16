@@ -129,6 +129,18 @@ create table `inventory_product` (
 ) character set utf8mb4,
   collate utf8mb4_unicode_ci;
 
+create table `attachment` (
+  `id` bigint(20) not null auto_increment,
+  primary key (`id`),
+  `product` bigint(20) not null,
+  key `a_f_product` (`product`),
+  constraint `a_f_product`
+    foreign key (`product`) references `product` (`id`),
+  `filename` varchar(64) not null,
+  `uploadtime` bigint(20) not null,
+  `deletetime` bigint(20) default null
+);
+
 create table `kvs` (
   `key` varchar(64) not null,
   primary key(`key`),
