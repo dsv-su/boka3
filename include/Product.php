@@ -1,22 +1,22 @@
 <?php
 class Product {
-    private $id = 0;
-    private $brand = '';
-    private $name = '';
-    private $invoice = '';
-    private $serial = '';
-    private $createtime = null;
-    private $discardtime = null;
-    private $info = array();
-    private $tags = array();
+    private $id;
+    private $brand;
+    private $name;
+    private $invoice;
+    private $serial;
+    private $createtime;
+    private $discardtime;
+    private $info;
+    private $tags;
     
     public static function create_product(
         $brand,
         $name,
         $invoice,
         $serial,
-        $info = array(),
-        $tags = array()
+        $info,
+        $tags
     ) {
         $now = time();
         begin_trans();
@@ -28,11 +28,15 @@ class Product {
             bind($ins_prod, 'ssssi', $brand, $name, $invoice, $serial, $now);
             execute($ins_prod);
             $product = new Product($serial, 'serial');
-            foreach($info as $field => $value) {
-                $product->set_info($field, $value);
+            if(is_array($info)) {
+                foreach($info as $field => $value) {
+                    $product->set_info($field, $value);
+                }
             }
-            foreach($tags as $tag) {
-                $product->add_tag($tag);
+            if(is_array($tags)) {
+                foreach($tags as $tag) {
+                    $product->add_tag($tag);
+                }
             }
             commit_trans();
             return $product;
@@ -64,9 +68,9 @@ class Product {
             throw new Exception('Product does not exist.');
         }
         $this->id = $result['id'];
-        $this->update_fields();
-        $this->update_info();
-        $this->update_tags();
+        #$this->update_fields();
+        #$this->update_info();
+        #$this->update_tags();
     }
     
     private function update_fields() {
@@ -141,14 +145,23 @@ class Product {
     }
 
     public function get_id() {
+        if($this->id === null) {
+            $this->update_fields();
+        }
         return $this->id;
     }
 
     public function get_createtime() {
+        if($this->createtime === null) {
+            $this->update_fields();
+        }
         return $this->createtime;
     }
 
     public function get_discardtime() {
+        if($this->createtime === null) {
+            $this->update_fields();
+        }
         return $this->discardtime;
     }
 
@@ -194,6 +207,9 @@ class Product {
     }
     
     public function get_brand() {
+        if($this->brand === null) {
+            $this->update_fields();
+        }
         return $this->brand;
     }
     
@@ -206,6 +222,9 @@ class Product {
     }
     
     public function get_name() {
+        if($this->name === null) {
+            $this->update_fields();
+        }
         return $this->name;
     }
     
@@ -218,6 +237,9 @@ class Product {
     }
     
     public function get_invoice() {
+        if($this->invoice === null) {
+            $this->update_fields();
+        }
         return $this->invoice;
     }
     
@@ -230,6 +252,9 @@ class Product {
     }
     
     public function get_serial() {
+        if($this->serial === null) {
+            $this->update_fields();
+        }
         return $this->serial;
     }
     
@@ -242,6 +267,9 @@ class Product {
     }
     
     public function get_info() {
+        if($this->info === null) {
+            $this->update_info();
+        }
         return $this->info;
     }
     
@@ -284,6 +312,9 @@ class Product {
     }
     
     public function get_tags() {
+        if($this->tags === null) {
+            $this->update_tags();
+        }
         return $this->tags;
     }
     
