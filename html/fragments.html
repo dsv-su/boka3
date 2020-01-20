@@ -64,20 +64,7 @@
 
 ¤¤ product_page ¤¤
 <div id="product-table">
-  <form id="product-create"
-        action="./"
-        method="get">
-    <input type="hidden"
-           name="page"
-           value="products" />
-    <input type="hidden"
-           name="action"
-           value="new" />
-    <button>
-      Ny artikel
-    </button>
     ¤product_table¤
-  </form>
 </div>
 
 ¤¤ product_table ¤¤
@@ -125,9 +112,6 @@
     <datalist id="template_suggest"></datalist>
     <input type="hidden"
            name="page"
-           value="products" />
-    <input type="hidden"
-           name="action"
            value="new" />
     <input onFocus="JavaScript:suggest(this, 'template')"
            list="template_suggest"

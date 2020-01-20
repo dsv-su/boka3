@@ -9,6 +9,7 @@ abstract class Page extends Responder {
     protected $menuitems = array('checkout' => 'Låna',
                                  'return' => 'Lämna',
                                  'products' => 'Artiklar',
+                                 'new' => 'Ny artikel',
                                  'users' => 'Låntagare',
                                  'inventory' => 'Inventera',
                                  'history' => 'Historik',
@@ -167,7 +168,7 @@ abstract class Page extends Responder {
             $rows .= replace(array('status' => $status,
                                    'item_link' => $prodlink,
                                    'serial' => $product->get_serial(),
-                                   'note' => $note,),
+                                   'note' => $note),
                              $this->fragments['product_row']);
         }
         return replace(array('rows' => $rows),

@@ -85,6 +85,8 @@ function make_page($page) {
             return new SearchPage();
         case 'products':
             return new ProductPage();
+        case 'new':
+            return new NewPage();
         case 'users':
             return new UserPage();
         case 'inventory':

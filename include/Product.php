@@ -1,22 +1,22 @@
 <?php
 class Product {
-    private $id;
-    private $brand;
-    private $name;
-    private $invoice;
-    private $serial;
-    private $createtime;
-    private $discardtime;
-    private $info;
-    private $tags;
+    private $id = 0;
+    private $brand = '';
+    private $name = '';
+    private $invoice = '';
+    private $serial = '';
+    private $createtime = null;
+    private $discardtime = null;
+    private $info = array();
+    private $tags = array();
     
     public static function create_product(
         $brand,
         $name,
         $invoice,
         $serial,
-        $info,
-        $tags
+        $info = array(),
+        $tags = array()
     ) {
         $now = time();
         begin_trans();
@@ -28,15 +28,11 @@ class Product {
             bind($ins_prod, 'ssssi', $brand, $name, $invoice, $serial, $now);
             execute($ins_prod);
             $product = new Product($serial, 'serial');
-            if(is_array($info)) {
-                foreach($info as $field => $value) {
-                    $product->set_info($field, $value);
-                }
+            foreach($info as $field => $value) {
+                $product->set_info($field, $value);
             }
-            if(is_array($tags)) {
-                foreach($tags as $tag) {
-                    $product->add_tag($tag);
-                }
+            foreach($tags as $tag) {
+                $product->add_tag($tag);
             }
             commit_trans();
             return $product;
@@ -50,12 +46,12 @@ class Product {
         $search = null;
         switch($type) {
             case 'id':
-                $search = prepare('select * from `product`
+                $search = prepare('select `id` from `product`
                                    where `id`=?');
                 bind($search, 'i', $clue);
                 break;
             case 'serial':
-                $search = prepare('select * from `product`
+                $search = prepare('select `id` from `product`
                                    where `serial`=?');
                 bind($search, 's', $clue);
                 break;
@@ -68,13 +64,9 @@ class Product {
             throw new Exception('Product does not exist.');
         }
         $this->id = $result['id'];
-        $this->brand = $result['brand'];
-        $this->name = $result['name'];
-        $this->invoice = $result['invoice'];
-        $this->serial = $result['serial'];
-        #$this->update_fields();
-        #$this->update_info();
-        #$this->update_tags();
+        $this->update_fields();
+        $this->update_info();
+        $this->update_tags();
     }
     
     private function update_fields() {
@@ -250,9 +242,6 @@ class Product {
     }
     
     public function get_info() {
-        if($this->info === null) {
-            $this->update_info();
-        }
         return $this->info;
     }
     
@@ -295,9 +284,6 @@ class Product {
     }
     
     public function get_tags() {
-        if($this->tags === null) {
-            $this->update_tags();
-        }
         return $this->tags;
     }
     
