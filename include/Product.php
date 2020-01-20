@@ -50,12 +50,12 @@ class Product {
         $search = null;
         switch($type) {
             case 'id':
-                $search = prepare('select `id` from `product`
+                $search = prepare('select * from `product`
                                    where `id`=?');
                 bind($search, 'i', $clue);
                 break;
             case 'serial':
-                $search = prepare('select `id` from `product`
+                $search = prepare('select * from `product`
                                    where `serial`=?');
                 bind($search, 's', $clue);
                 break;
@@ -68,6 +68,10 @@ class Product {
             throw new Exception('Product does not exist.');
         }
         $this->id = $result['id'];
+        $this->brand = $result['brand'];
+        $this->name = $result['name'];
+        $this->invoice = $result['invoice'];
+        $this->serial = $result['serial'];
         #$this->update_fields();
         #$this->update_info();
         #$this->update_tags();
@@ -145,23 +149,14 @@ class Product {
     }
 
     public function get_id() {
-        if($this->id === null) {
-            $this->update_fields();
-        }
         return $this->id;
     }
 
     public function get_createtime() {
-        if($this->createtime === null) {
-            $this->update_fields();
-        }
         return $this->createtime;
     }
 
     public function get_discardtime() {
-        if($this->createtime === null) {
-            $this->update_fields();
-        }
         return $this->discardtime;
     }
 
@@ -207,9 +202,6 @@ class Product {
     }
     
     public function get_brand() {
-        if($this->brand === null) {
-            $this->update_fields();
-        }
         return $this->brand;
     }
     
@@ -222,9 +214,6 @@ class Product {
     }
     
     public function get_name() {
-        if($this->name === null) {
-            $this->update_fields();
-        }
         return $this->name;
     }
     
@@ -237,9 +226,6 @@ class Product {
     }
     
     public function get_invoice() {
-        if($this->invoice === null) {
-            $this->update_fields();
-        }
         return $this->invoice;
     }
     
@@ -252,9 +238,6 @@ class Product {
     }
     
     public function get_serial() {
-        if($this->serial === null) {
-            $this->update_fields();
-        }
         return $this->serial;
     }
     
