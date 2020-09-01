@@ -35,8 +35,8 @@ class Cron {
     
     private function send_reminder($user, $loans) {
         $subject_template = "DSV Helpdesk: Du har ¤count¤ ¤late¤ lån";
-        $reminder_template_sv = "¤name¤, försenad sedan ¤due¤\n";
-        $reminder_template_en = "¤name¤, late since ¤due¤\n";
+        $reminder_template_sv = "¤brand¤ ¤name¤, försenad sedan ¤due¤\n";
+        $reminder_template_en = "¤brand¤ ¤name¤, late since ¤due¤\n";
         $message_template = <<<EOF
 Hej ¤name¤
 
@@ -80,8 +80,9 @@ EOF;
             $loan_en = 'loans';
         }
         foreach($loans as $loan) {
-            $replacements = array('name' => $loan->get_product()->get_name(),
-                                  'due'  => format_date($loan->get_endtime()));
+            $replacements = array('name'  => $loan->get_product()->get_name(),
+                                  'brand' => $loan->get_product()->get_brand(),
+                                  'due'   => format_date($loan->get_endtime()));
             $reminder_list_sv .= replace($replacements, $reminder_template_sv);
             $reminder_list_en .= replace($replacements, $reminder_template_en);
         }
