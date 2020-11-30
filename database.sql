@@ -3,7 +3,7 @@ create table `product` (
   primary key(`id`),
   `brand` varchar(64) not null,
   `name` varchar(64) not null,
-  `invoice` varchar(64) not null,
+  `invoice` varchar(256) not null,
   `serial` varchar(64) not null,
   unique `uniq_serial`(`serial`),
   `createtime` bigint(20) not null,
